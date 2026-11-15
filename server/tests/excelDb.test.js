@@ -180,40 +180,35 @@ describe('MarmitexSocial Excel Database CRUD', () => {
     stopScheduler();
   });
 
-  it('keeps immutable pre-edit backup of existing menu and restores original history on edit or delete after 10 minutes', async () => {
+  it('keeps edited main dishes indefinitely unless deleted, then restores pre-edit history after 10 minutes', async () => {
     const original102 = await getMarmitaById('MARM-102');
     assert.ok(original102);
 
-    // 1. Editing a main item keeps BackupCardapio untouched and reverts edit after 10 minutes
+    // 1. Editing an active main item keeps BackupCardapio untouched AND preserves the edit forever if not deleted
     const editedOnly = await updateMarmita('MARM-102', {
-      nome: 'Frango Temporariamente Editado',
+      nome: 'Frango Editado Permanente',
       preco: 99.0,
     });
-    assert.equal(editedOnly.nome, 'Frango Temporariamente Editado');
+    assert.equal(editedOnly.nome, 'Frango Editado Permanente');
     assert.equal(editedOnly.preco, 99.0);
 
     const backupAfterEdit = await getBackupEntryById('MARM-102');
     assert.equal(backupAfterEdit.nome, original102.nome);
     assert.equal(backupAfterEdit.preco, original102.preco);
-    assert.ok(backupAfterEdit.restaurarEm);
+    assert.equal(backupAfterEdit.restaurarEm, '');
+    assert.equal((await getBackupSummary()).pendingRestoreCount, 0);
 
     const editedMs = Date.parse(editedOnly.atualizadoEm);
-    const editAt5Min = await restoreDeletedMainMarmitas({ now: editedMs + 5 * 60 * 1000 });
-    assert.equal(editAt5Min.restoredCount, 0);
-    assert.equal((await getMarmitaById('MARM-102')).preco, 99.0);
+    const editAt15Min = await cleanupInsertedMarmitas({ now: editedMs + 15 * 60 * 1000 });
+    assert.equal(editAt15Min.restoredCount, 0);
+    const forcedWithoutDelete = await restoreDeletedMainMarmitas({ force: true, ids: ['MARM-102'] });
+    assert.equal(forcedWithoutDelete.restoredCount, 0);
 
-    const editAt10Min = await cleanupInsertedMarmitas({ now: editedMs + 10 * 60 * 1000 });
-    assert.equal(editAt10Min.restoredCount, 1);
-    assert.deepEqual(editAt10Min.restoredIds, ['MARM-102']);
-    const revertedAfterEdit = await getMarmitaById('MARM-102');
-    assert.equal(revertedAfterEdit.nome, original102.nome);
-    assert.equal(revertedAfterEdit.preco, original102.preco);
+    const preservedEdit = await getMarmitaById('MARM-102');
+    assert.equal(preservedEdit.nome, 'Frango Editado Permanente');
+    assert.equal(preservedEdit.preco, 99.0);
 
-    // 2. Editing and then deleting must restore pre-edit history (not the edited version) after 10 minutes
-    await updateMarmita('MARM-102', {
-      nome: 'Alterado Antes de Deletar',
-      preco: 88.0,
-    });
+    // 2. Deleting after editing must restore pre-edit history (not the edited version) after 10 minutes
     const deleted = await deleteMarmita('MARM-102');
     assert.equal(deleted, true);
     assert.equal(await getMarmitaById('MARM-102'), null);
@@ -281,7 +276,7 @@ describe('MarmitexSocial Excel Database CRUD', () => {
       }
     }
 
-    // 4. Explicit baseline capture commits current spreadsheet values as the new immutable backup
+    // 4. Explicit baseline capture commits current spreadsheet values as the new backup baseline (restored only if deleted)
     await updateMarmita('MARM-101', { nome: 'Feijoada Oficial Atualizada' });
     const captured = await captureBackupBaseline({ ids: ['MARM-101'] });
     assert.equal(captured.updatedCount, 1);
@@ -289,9 +284,16 @@ describe('MarmitexSocial Excel Database CRUD', () => {
     assert.equal(captured.backup.pendingRestoreCount, 0);
     assert.equal((await getBackupEntryById('MARM-101')).nome, 'Feijoada Oficial Atualizada');
 
-    await updateMarmita('MARM-101', { nome: 'Edicao Temporaria Depois do Baseline' });
-    const revertedToBaseline = await restoreDeletedMainMarmitas({ force: true, ids: ['MARM-101'] });
-    assert.equal(revertedToBaseline.restoredCount, 1);
+    await updateMarmita('MARM-101', { nome: 'Edicao Depois do Baseline' });
+    // If not deleted, the edit remains even when force restore runs
+    const notDeletedRestore = await restoreDeletedMainMarmitas({ force: true, ids: ['MARM-101'] });
+    assert.equal(notDeletedRestore.restoredCount, 0);
+    assert.equal((await getMarmitaById('MARM-101')).nome, 'Edicao Depois do Baseline');
+
+    // Once deleted, it restores the captured baseline from before the edit
+    await deleteMarmita('MARM-101');
+    const revertedOnDelete = await restoreDeletedMainMarmitas({ force: true, ids: ['MARM-101'] });
+    assert.equal(revertedOnDelete.restoredCount, 1);
     assert.equal((await getMarmitaById('MARM-101')).nome, 'Feijoada Oficial Atualizada');
   });
 

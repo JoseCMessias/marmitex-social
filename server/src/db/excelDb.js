@@ -541,24 +541,6 @@ function sortMarmitasForSheet(marmitas) {
   return [...inserted, ...main];
 }
 
-function dishesDiffer(a, b) {
-  if (!a || !b) return true;
-  return (
-    a.nome !== b.nome ||
-    a.descricao !== b.descricao ||
-    a.categoria !== b.categoria ||
-    a.gosto !== b.gosto ||
-    Number(a.preco) !== Number(b.preco) ||
-    (a.precoPromocional ?? null) !== (b.precoPromocional ?? null) ||
-    a.tamanho !== b.tamanho ||
-    (a.calorias ?? null) !== (b.calorias ?? null) ||
-    a.tempoPreparo !== b.tempoPreparo ||
-    a.imagem !== b.imagem ||
-    Boolean(a.disponivel) !== Boolean(b.disponivel) ||
-    Boolean(a.destaque) !== Boolean(b.destaque)
-  );
-}
-
 export function serializeMarmita(item) {
   const temporario = isInsertedMarmita(item);
   const createdMs = Date.parse(item.criadoEm);
@@ -602,8 +584,9 @@ export function getExpiredInsertedMarmitas(
 }
 
 /**
- * Reconciles 10-minute inserted-dish expiration and 10-minute immutable main-dish backup/restore.
- * The backup snapshot stored in BackupCardapio is never overwritten by subsequent edits or deletions.
+ * Reconciles 10-minute inserted-dish expiration and 10-minute deletion-only main-dish backup/restore.
+ * Active edits remain persisted in `Marmitas`, while `BackupCardapio` keeps the immutable pre-edit
+ * historical snapshot to restore only if a main dish is deleted.
  */
 export function reconcileWorkbookState(
   marmitas,
@@ -646,45 +629,16 @@ export function reconcileWorkbookState(
         continue;
       }
 
-      const snapshotSource = stripBackupMeta(prevBackup);
-      const isModified = dishesDiffer(active, prevBackup);
-
-      if (!isModified) {
-        if (prevBackup.deletadoEm || prevBackup.restaurarEm) {
-          nextBackup.push(buildBackupEntry(snapshotSource, { backupEm: prevBackup.backupEm || nowIso }));
-          backupChanged = true;
-        } else {
-          nextBackup.push(prevBackup);
-        }
-        continue;
-      }
-
-      const restaurarEm = prevBackup.restaurarEm || new Date(nowMs + backupDelayMs).toISOString();
-      const restoreAtMs = Date.parse(restaurarEm);
-      const isDue =
-        forceRestore ||
-        isTargeted ||
-        (Boolean(prevBackup.restaurarEm) && (!Number.isFinite(restoreAtMs) || nowMs >= restoreAtMs));
-
-      if (isDue) {
-        const restoredItem = hydrateMarmita({
-          ...snapshotSource,
-          atualizadoEm: nowIso,
-        });
-        restoredById.set(seedItem.id, restoredItem);
-        nextBackup.push(buildBackupEntry(snapshotSource, { backupEm: prevBackup.backupEm || nowIso }));
-        backupChanged = true;
-      } else {
-        if (!prevBackup.restaurarEm || prevBackup.deletadoEm) {
-          backupChanged = true;
-        }
+      // Active dishes keep their current/edited values; preserve pre-edit history without scheduling rollback.
+      if (prevBackup.deletadoEm || prevBackup.restaurarEm) {
         nextBackup.push(
-          buildBackupEntry(snapshotSource, {
+          buildBackupEntry(stripBackupMeta(prevBackup), {
             backupEm: prevBackup.backupEm || nowIso,
-            deletadoEm: '',
-            restaurarEm,
           })
         );
+        backupChanged = true;
+      } else {
+        nextBackup.push(prevBackup);
       }
       continue;
     }
@@ -1040,24 +994,21 @@ export async function updateMarmita(id, payload) {
     const nextMarmitas = [...reconciled.marmitas];
     nextMarmitas[index] = updatedItem;
 
-    // Never overwrite the historical backup snapshot on edit; only schedule 10-min recovery to pre-edit state.
+    // Preserve pre-edit historical backup without scheduling rollback; edited values stay unless deleted.
     let nextBackup = reconciled.backupEntries;
     if (isMainMarmita(updatedItem)) {
       const prevBackup = reconciled.backupEntries.find((entry) => entry.id === updatedItem.id);
-      const snapshotSource = prevBackup ? stripBackupMeta(prevBackup) : existing;
-      const isModified = dishesDiffer(updatedItem, snapshotSource);
-      const restaurarEm = isModified
-        ? new Date(nowMs + getMainDishBackupDelayMs()).toISOString()
-        : '';
-
-      nextBackup = upsertBackupEntry(
-        reconciled.backupEntries,
-        buildBackupEntry(snapshotSource, {
-          backupEm: prevBackup?.backupEm || nowIso,
-          deletadoEm: '',
-          restaurarEm,
-        })
-      );
+      if (!prevBackup || prevBackup.deletadoEm || prevBackup.restaurarEm) {
+        const snapshotSource = prevBackup ? stripBackupMeta(prevBackup) : existing;
+        nextBackup = upsertBackupEntry(
+          reconciled.backupEntries,
+          buildBackupEntry(snapshotSource, {
+            backupEm: prevBackup?.backupEm || nowIso,
+            deletadoEm: '',
+            restaurarEm: '',
+          })
+        );
+      }
     }
 
     await writeDatabase(nextMarmitas, pedidos, nextBackup);

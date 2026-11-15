@@ -233,7 +233,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(forceCleanup.deletedCount, 1);
     assert.deepEqual(forceCleanup.deletedIds, [tempDish.id]);
 
-    // Editing and then deleting a main menu item always recovers the original pre-edit backup
+    // Editing a main item preserves the edit without scheduling rollback; deleting recovers pre-edit history
     const origMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`);
     assert.equal(origMainRes.status, 200);
     const origMain = (await origMainRes.json()).item;
@@ -241,11 +241,24 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const editMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
       method: 'PUT',
       headers: authHeaders,
-      body: JSON.stringify({ nome: 'Prato Alterado Temporariamente', precoPromocional: 19.9 }),
+      body: JSON.stringify({ nome: 'Prato Alterado Sem Deletar', precoPromocional: 19.9 }),
     });
     assert.equal(editMainRes.status, 200);
     const editMainData = await editMainRes.json();
-    assert.equal(editMainData.backupScheduled, true);
+    assert.equal(editMainData.backupScheduled, false);
+    assert.equal(editMainData.restaurarEm, null);
+
+    // Without deletion, forced backup restore keeps the edited item intact
+    const forcedWhileNotDeleted = await (
+      await fetch(`${baseUrl}/api/marmitas/backup/restore`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ force: true, ids: ['MARM-101'] }),
+      })
+    ).json();
+    assert.equal(forcedWhileNotDeleted.restoredCount, 0);
+    const persistedEditRes = await (await fetch(`${baseUrl}/api/marmitas/MARM-101`)).json();
+    assert.equal(persistedEditRes.item.nome, 'Prato Alterado Sem Deletar');
 
     const delMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
       method: 'DELETE',
@@ -288,7 +301,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(restoredMain.nome, origMain.nome);
     assert.equal(restoredMain.precoPromocional, origMain.precoPromocional);
 
-    // Explicit admin baseline capture commits an updated baseline without normal edits touching backup
+    // Explicit admin baseline capture commits a new baseline; edits stay until deleted, then restore new baseline
     const baselineEditRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
       method: 'PUT',
       headers: authHeaders,
@@ -309,7 +322,11 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
       method: 'PUT',
       headers: authHeaders,
-      body: JSON.stringify({ nome: 'Teste Efemero Pós-Baseline' }),
+      body: JSON.stringify({ nome: 'Teste Mantido Enquanto Ativo' }),
+    });
+    await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${loginData.token}` },
     });
     await fetch(`${baseUrl}/api/marmitas/backup/restore`, {
       method: 'POST',
