@@ -90,13 +90,15 @@ npm run dev
 ### 4. Rodar em Modo Produção (servidor único na porta `3001`)
 Gera os arquivos estáticos em `client/dist/` e serve tudo pela própria API Express:
 
-### 4. Rodar executável do MarmitexSocial no vercel
-- **[Clicla aqui](https://client-one-theta-55.vercel.app/)**
 ```bash
 npm run build
 npm start
 ```
 Acesse em `http://localhost:3001/#/` (cliente) e `http://localhost:3001/#/admin` (admin).
+
+### 5. Acessar Online na Vercel
+- **Aplicação Web (Loja e Admin):** **[Clicla aqui](https://client-one-theta-55.vercel.app/)**
+- **Protótipo Interativo de Telas:** **[Visualizar Prototipagem na Vercel](https://marmitex-social-docs.vercel.app/)**
 
 ---
 
@@ -135,10 +137,10 @@ npm run build
 
 ## Prototipagem, Passo a Passo e Deploy
 
-- **Protótipo interativo na web (Vercel):** `https://client-one-theta-55.vercel.app/prototipo.html`
-- **Protótipo interativo clicável:** abra [`docs/prototipo.html`](docs/prototipo.html) diretamente no navegador.
+- **Visualizar protótipo interativo na Vercel:** [https://marmitex-social-docs.vercel.app/](https://marmitex-social-docs.vercel.app/)
+- **Protótipo interativo clicável local:** abra [`docs/prototipo.html`](docs/prototipo.html) diretamente no navegador.
 - **Guia completo e prototipagem em Markdown:** [`docs/PROTOTIPAGEM_E_GUIA_DE_USO.md`](docs/PROTOTIPAGEM_E_GUIA_DE_USO.md)
-- **Deploy na Vercel (API e Frontend):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md)
+- **Deploy na Vercel (API, Frontend e Protótipo):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md)
 
 ---
 

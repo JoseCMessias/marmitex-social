@@ -547,7 +547,7 @@
         <div class="card">
           <h3>Navegação Rápida (Vercel &amp; Local)</h3>
           <div class="flow-box"><strong>App Vercel:</strong><br /><code>https://client-one-theta-55.vercel.app/</code></div>
-          <div class="flow-box"><strong>Protótipo Vercel:</strong><br /><code>https://client-one-theta-55.vercel.app/prototipo.html</code></div>
+          <div class="flow-box"><strong>Protótipo Vercel:</strong><br /><code>https://marmitex-social-docs.vercel.app/</code></div>
           <div class="flow-box"><strong>API Pix (Vercel):</strong><br /><code>POST /api/pagamentos/pix</code></div>
           <div class="flow-box"><strong>Admin Local:</strong><br /><code>admin</code> / <code>admin123</code></div>
         </div>
@@ -570,7 +570,6 @@ Minimum version required to store current data is: `+i+`.
   <script>
     function getImageUrl(filename) {
       if (window.location.protocol === 'file:') {
-        // If opened inside docs/, relative path works; if extracted to %LOCALAPPDATA%, fallback hits Vercel
         const normalized = window.location.pathname.replace(/\\/g, '/').toLowerCase();
         if (normalized.includes('/docs/')) {
           return '../client/public/images/marmitas/' + filename;

@@ -104,13 +104,13 @@ O projeto do frontend em `https://client-one-theta-55.vercel.app` já está pré
 
 ---
 
-## Passo a Passo: Deploy Dedicado Apenas do Protótipo (`docs/`) na Vercel
+## Deploy Dedicado do Protótipo (`docs/`) na Vercel
 
-Caso queira uma URL exclusiva na Vercel apontando diretamente para o protótipo (sem passar pelo app principal):
+O protótipo interativo também está publicado em projeto dedicado na Vercel em `https://marmitex-social-docs.vercel.app/`, configurado a partir da pasta `docs/`:
 
-1. Acesse [vercel.com](https://vercel.com) → **Add New... → Project** e importe o mesmo repositório `marmitex-social`.
+1. Acesse [vercel.com](https://vercel.com) → **Add New... → Project** e importe o repositório `marmitex-social`.
 2. Em **Configure Project**, preencha:
-   - **Project Name:** por exemplo `marmitex-prototipo`
+   - **Project Name:** `marmitex-social-docs`
    - **Framework Preset:** `Other`
    - **Root Directory:** clique em **Edit** e selecione `docs`
    - **Build Command:** deixe vazio (ou desativado)
