@@ -66,7 +66,7 @@ Todos os três pontos já foram corrigidos:
 
 ## Passo a Passo: Deploy do Frontend (`client/`) na Vercel
 
-O projeto do frontend em `https://client-one-theta-55.vercel.app` já está pré-conectado à API `https://server-peach-six-28.vercel.app` via `client/vercel.json` (proxy de `/api/*` e `/uploads/*`).
+O projeto do frontend em `https://client-one-theta-55.vercel.app` já está pré-conectado à API `https://server-d27r.vercel.app` via `client/vercel.json` (proxy de `/api/*` e `/uploads/*`) e fallback em `client/src/services/api.js`.
 
 1. Confirme as configurações do projeto `client` na Vercel:
    - **Framework Preset:** `Vite`
@@ -75,7 +75,7 @@ O projeto do frontend em `https://client-one-theta-55.vercel.app` já está pré
    - **Output Directory:** `dist`
 2. *(Opcional)* Se mudar o domínio da API no futuro, adicione em **Environment Variables** (ou atualize `client/vercel.json`):
    - **Name:** `VITE_API_URL`
-   - **Value:** `https://server-peach-six-28.vercel.app` *(sem `/` no final)*
-3. Após enviar as alterações (`git push`), faça **Redeploy** nos dois projetos (`server-peach-six-28` e `client-one-theta-55`) e acesse:
+   - **Value:** `https://server-d27r.vercel.app` *(sem `/` no final)*
+3. Após enviar as alterações (`git push`), os projetos conectados (`server-d27r` e `client`) publicam automaticamente; depois acesse:
    - Loja: `https://client-one-theta-55.vercel.app/#/`
    - Admin: `https://client-one-theta-55.vercel.app/#/admin`

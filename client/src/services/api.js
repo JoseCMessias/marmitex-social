@@ -1,6 +1,6 @@
 const DEFAULT_VERCEL_API =
   typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')
-    ? 'https://server-peach-six-28.vercel.app'
+    ? 'https://server-d27r.vercel.app'
     : '';
 const API_ORIGIN = (import.meta.env.VITE_API_URL || DEFAULT_VERCEL_API).replace(/\/$/, '');
 const API_BASE = `${API_ORIGIN}/api`;

@@ -94,12 +94,13 @@ export function createApp() {
   return app;
 }
 
+const app = createApp();
+
 const isDirectRun =
   process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
 
 if (isDirectRun) {
   const PORT = Number(process.env.PORT) || 3001;
-  const app = createApp();
   app.listen(PORT, () => {
     console.log(`MarmitexSocial API rodando em http://localhost:${PORT}`);
     console.log(`Planilha Excel conectada em: ${getDbPath()}`);
@@ -108,3 +109,5 @@ if (isDirectRun) {
     console.error('Falha ao inicializar banco Excel:', err);
   });
 }
+
+export default app;
