@@ -222,7 +222,6 @@
       </div>
       <div class="header-actions">
         <a id="open-live-app" href="https://client-one-theta-55.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-green">Abrir App Online (Vercel)</a>
-        <a id="download-exe-btn" href="/MarmitexSocial-Prototipo.exe" download class="btn btn-soft">Baixar Executável (.exe)</a>
         <div class="device-switch">
           <button class="dev-btn active" id="btn-desktop" onclick="setDevice('desktop')">Desktop</button>
           <button class="dev-btn" id="btn-mobile" onclick="setDevice('mobile')">Celular (390px)</button>
@@ -1129,10 +1128,6 @@ Minimum version required to store current data is: `+i+`.
     }
 
     function renderAll() {
-      // Hide download exe link if already opened directly from disk/exe
-      const exeBtn = document.getElementById('download-exe-btn');
-      if (exeBtn) exeBtn.classList.toggle('hidden', window.location.protocol === 'file:');
-
       const heroImg = document.getElementById('hero-dish-img');
       if (heroImg && !heroImg.dataset.init) {
         heroImg.dataset.init = '1';

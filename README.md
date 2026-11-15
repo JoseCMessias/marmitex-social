@@ -133,15 +133,10 @@ npm run build
 
 ---
 
-## Prototipagem, Executável e Deploy
+## Prototipagem, Passo a Passo e Deploy
 
-- **Executável Windows da Prototipagem (`.exe`):** dê dois cliques em [`MarmitexSocial-Prototipo.exe`](MarmitexSocial-Prototipo.exe) na raiz do projeto (ou baixe em `https://client-one-theta-55.vercel.app/MarmitexSocial-Prototipo.exe`). Ele abre a prototipagem diretamente pela Vercel em modo janela desktop (com fallback automático para a versão offline embutida no próprio `.exe`).
-- **Para recompilar o executável após editar `docs/prototipo.html`:**
-  ```bash
-  npm run build:prototipo
-  ```
 - **Protótipo interativo na web (Vercel):** `https://client-one-theta-55.vercel.app/prototipo.html`
-- **Protótipo local no navegador:** abra [`docs/prototipo.html`](docs/prototipo.html) diretamente no navegador.
+- **Protótipo interativo clicável:** abra [`docs/prototipo.html`](docs/prototipo.html) diretamente no navegador.
 - **Guia completo e prototipagem em Markdown:** [`docs/PROTOTIPAGEM_E_GUIA_DE_USO.md`](docs/PROTOTIPAGEM_E_GUIA_DE_USO.md)
 - **Deploy na Vercel (API e Frontend):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md)
 
