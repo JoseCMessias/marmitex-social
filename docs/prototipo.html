@@ -27,9 +27,9 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.45;
-      padding: 20px;
+      padding: 16px;
     }
-    .container { max-width: 1220px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .container { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -42,10 +42,13 @@
       display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800;
       padding: 3px 10px; border-radius: 999px; background: #FFF7ED; color: var(--orange); border: 1px solid #FED7AA;
     }
-    h1 { margin: 6px 0 4px; font-size: 22px; }
+    .badge-green { background: #DCFCE7; color: #166534; border-color: #BBF7D0; }
+    .badge-amber { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+    h1 { margin: 6px 0 4px; font-size: 21px; }
     h2 { margin: 0 0 8px; font-size: 18px; }
     h3 { margin: 0 0 8px; font-size: 14px; }
-    p.muted { margin: 0; color: var(--muted); font-size: 13px; }
+    p.muted, .muted { margin: 0; color: var(--muted); font-size: 12px; }
+    .header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .device-switch { display: inline-flex; background: var(--soft); border: 1px solid var(--border); padding: 4px; border-radius: 12px; gap: 4px; }
     .dev-btn { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--muted); }
     .dev-btn.active { background: var(--text); color: #fff; }
@@ -58,7 +61,7 @@
     .tab-btn:hover { background: #FFF7ED; border-color: #FDBA74; }
     .tab-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
 
-    .grid-main { display: grid; grid-template-columns: 2.2fr 1fr; gap: 18px; align-items: start; }
+    .grid-main { display: grid; grid-template-columns: 2.3fr 1fr; gap: 18px; align-items: start; }
     @media (max-width: 960px) { .grid-main { grid-template-columns: 1fr; } }
 
     .viewport-shell { transition: all 0.2s ease; margin: 0 auto; width: 100%; }
@@ -116,12 +119,14 @@
     .dish-body { padding: 12px; display: flex; flex-direction: column; flex: 1; gap: 6px; }
 
     .btn {
-      cursor: pointer; border: 0; border-radius: 10px; padding: 7px 12px; font-size: 12px; font-weight: 800; transition: 0.15s ease;
+      cursor: pointer; border: 0; border-radius: 10px; padding: 7px 12px; font-size: 12px; font-weight: 800;
+      transition: 0.15s ease; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     }
     .btn-green { background: var(--green); color: #fff; }
     .btn-green:hover { background: var(--green-dark); }
     .btn-orange { background: var(--orange); color: #fff; }
     .btn-orange:hover { background: var(--orange-dark); }
+    .btn-dark { background: var(--text); color: #fff; }
     .btn-soft { background: var(--soft); color: var(--text); border: 1px solid var(--border); }
     .btn-red { background: #FEE2E2; color: var(--red); }
 
@@ -138,7 +143,7 @@
       width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px;
       font-size: 12px; background: var(--soft); color: var(--text); font-family: inherit;
     }
-    .form-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+    .form-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
     .hidden { display: none !important; }
     .status-ok { background: #DCFCE7; color: #166534; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11px; border: 0; cursor: pointer; }
     .status-off { background: #E7E5E4; color: #44403C; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11px; border: 0; cursor: pointer; }
@@ -147,31 +152,94 @@
       margin-top: 12px; background: var(--green); color: #fff; border-radius: 14px; padding: 10px 14px;
       display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 13px; cursor: pointer;
     }
+
+    /* Payment Screen Styles */
+    .pay-banner {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      border-radius: 14px; border: 1px solid #FED7AA; background: #FFF7ED; padding: 10px 14px; margin-bottom: 12px;
+    }
+    .pay-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .viewport-shell.mobile .pay-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 560px) { .pay-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .pay-method-btn {
+      cursor: pointer; border: 1px solid var(--border); background: #fff; border-radius: 14px; padding: 10px;
+      text-align: left; display: flex; flex-direction: column; gap: 4px; transition: 0.15s ease;
+    }
+    .pay-method-btn:hover { border-color: #FDBA74; background: #FFFBF5; }
+    .pay-method-btn.active { border-color: var(--orange); background: #FFF7ED; box-shadow: 0 0 0 2px #FED7AA; }
+    .pay-tag {
+      display: inline-block; align-self: flex-start; font-size: 10px; font-weight: 800;
+      padding: 2px 7px; border-radius: 999px; background: var(--soft); color: var(--muted);
+    }
+    .pay-method-btn.active .pay-tag { background: #FFEDD5; color: var(--orange-dark); }
+    .pay-panel {
+      border: 1px solid var(--border); border-radius: 16px; background: #FAF5EE; padding: 14px; margin-bottom: 12px;
+    }
+    .pay-panel.pix { background: #ECFDF5; border-color: #A7F3D0; }
+    .qr-card {
+      background: #fff; border: 1px solid #D1FAE5; border-radius: 14px; padding: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .qr-svg-wrap {
+      width: 184px; height: 184px; padding: 6px; border: 1px solid var(--border); border-radius: 12px; background: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qr-svg-wrap svg { width: 100%; height: 100%; display: block; }
+    .mode-switch {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #E7E5E4; padding: 4px; border-radius: 12px; margin-bottom: 12px;
+    }
+    .mode-btn {
+      border: 0; border-radius: 9px; padding: 8px; font-size: 11px; font-weight: 800; cursor: pointer; background: transparent; color: var(--muted);
+    }
+    .mode-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card-preview {
+      border-radius: 16px; padding: 16px; color: #fff; margin-bottom: 12px;
+      background: linear-gradient(135deg, #1C1917 0%, #292524 55%, #7C2D12 100%);
+      box-shadow: 0 10px 22px rgba(28,25,23,0.18);
+    }
+    .brand-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .brand-chip {
+      cursor: pointer; border: 1px solid var(--border); background: #fff; border-radius: 10px;
+      padding: 6px 10px; font-size: 11px; font-weight: 700; color: var(--text);
+    }
+    .brand-chip.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .error-box {
+      background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; padding: 8px 10px;
+      border-radius: 10px; font-size: 12px; font-weight: 700; margin-bottom: 10px;
+    }
+    .receipt-box {
+      background: #fff; border: 1px solid #BBF7D0; border-radius: 16px; padding: 18px; text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card header">
       <div>
-        <span class="badge">Protótipo Visual de Todas as Telas • MarmitexSocial</span>
-        <h1>Protótipo Interativo de Telas (Desktop e Mobile)</h1>
-        <p class="muted">Navegue por todas as 7 telas do aplicativo, alterne entre Desktop e Celular e simule compras e operações CRUD do Excel.</p>
+        <span class="badge">Protótipo Visual Interativo • MarmitexSocial</span>
+        <h1>Protótipo de Telas (Cardápio, Pix QR Code, Cartões &amp; Excel)</h1>
+        <p class="muted">Navegue por todas as 8 telas do sistema, teste pagamentos com QR Code Pix real, cartões, vales e alterne Desktop / Celular.</p>
       </div>
-      <div class="device-switch">
-        <button class="dev-btn active" id="btn-desktop" onclick="setDevice('desktop')">Desktop</button>
-        <button class="dev-btn" id="btn-mobile" onclick="setDevice('mobile')">Celular (390px)</button>
+      <div class="header-actions">
+        <a id="open-live-app" href="https://client-one-theta-55.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-green">Abrir App Online (Vercel)</a>
+        <a id="download-exe-btn" href="/MarmitexSocial-Prototipo.exe" download class="btn btn-soft">Baixar Executável (.exe)</a>
+        <div class="device-switch">
+          <button class="dev-btn active" id="btn-desktop" onclick="setDevice('desktop')">Desktop</button>
+          <button class="dev-btn" id="btn-mobile" onclick="setDevice('mobile')">Celular (390px)</button>
+        </div>
       </div>
     </div>
 
-    <!-- 7 SCREEN TABS -->
+    <!-- 8 SCREEN TABS -->
     <div class="tabs">
       <button class="tab-btn active" data-tab="store">Tela 1: Cardápio (Cliente)</button>
       <button class="tab-btn" data-tab="modal">Tela 2: Detalhes do Prato</button>
-      <button class="tab-btn" data-tab="checkout">Tela 3: Sacola &amp; Checkout</button>
-      <button class="tab-btn" data-tab="admin">Tela 4: Admin — Marmitas</button>
-      <button class="tab-btn" data-tab="adminform">Tela 5: Modal Cadastro / Edição</button>
-      <button class="tab-btn" data-tab="orders">Tela 6: Admin — Pedidos</button>
-      <button class="tab-btn" data-tab="excel">Tela 7: Planilha Excel (.xlsx)</button>
+      <button class="tab-btn" data-tab="checkout">Tela 3: Sacola &amp; Entrega</button>
+      <button class="tab-btn" data-tab="payment">Tela 4: Pagamento (Pix QR &amp; Cartões)</button>
+      <button class="tab-btn" data-tab="admin">Tela 5: Admin — Marmitas</button>
+      <button class="tab-btn" data-tab="adminform">Tela 6: Modal Cadastro / Edição</button>
+      <button class="tab-btn" data-tab="orders">Tela 7: Admin — Pedidos</button>
+      <button class="tab-btn" data-tab="excel">Tela 8: Planilha Excel (.xlsx)</button>
     </div>
 
     <div class="grid-main">
@@ -183,7 +251,7 @@
               <div class="brand-icon">M</div>
               <div>Marmitex<span style="color:var(--orange)">Social</span></div>
             </div>
-            <div style="display:flex;gap:6px;align-items:center;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
               <button class="btn btn-soft" onclick="switchTab('store')">Cardápio</button>
               <button class="btn btn-soft" onclick="switchTab('admin')">Admin</button>
               <button class="btn btn-green" id="top-cart-btn" onclick="switchTab('checkout')">Sacola (1)</button>
@@ -199,7 +267,7 @@
                 <p style="margin:0;font-size:12px;opacity:.95;">Do caseiro tradicional ao fitness, vegano e gourmet.</p>
               </div>
               <div class="hero-card">
-                <img src="../client/public/images/marmitas/feijoada.jpg" onerror="this.style.display='none'" alt="Feijoada" />
+                <img id="hero-dish-img" alt="Feijoada" />
                 <div>
                   <div style="font-size:10px;font-weight:800;color:#B45309;">★ DESTAQUE DO CHEF</div>
                   <div style="font-weight:800;font-size:13px;">Feijoada Completa</div>
@@ -223,7 +291,7 @@
           <div id="tab-modal" class="tab-panel hidden">
             <div class="card" style="max-width:520px;margin:0 auto;padding:0;overflow:hidden;">
               <div style="position:relative;height:180px;background:#FFF3E0;">
-                <img id="modal-img" src="../client/public/images/marmitas/salmao-gourmet.jpg" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;" alt="Prato" />
+                <img id="modal-img" style="width:100%;height:100%;object-fit:cover;" alt="Prato" />
                 <span class="promo-tag">-15% OFF</span>
               </div>
               <div style="padding:16px;">
@@ -247,37 +315,129 @@
             </div>
           </div>
 
-          <!-- TELA 3: SACOLA E CHECKOUT -->
+          <!-- TELA 3: SACOLA E DADOS PARA ENTREGA (ETAPA 1 DE 2) -->
           <div id="tab-checkout" class="tab-panel hidden">
             <div class="form-2col">
               <div>
-                <h3>Itens na Sacola</h3>
+                <h3>1. Itens na Sacola</h3>
                 <div id="checkout-items" style="display:flex;flex-direction:column;gap:8px;"></div>
                 <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-weight:800;">
-                  <span>Total (Frete Grátis)</span>
+                  <span>Subtotal (Frete Grátis)</span>
                   <span id="checkout-total" style="color:var(--green);">R$ 26,90</span>
                 </div>
               </div>
               <div class="flow-box" style="margin-top:0;">
-                <h3 style="color:var(--orange);">Dados para Entrega Rápida</h3>
+                <h3 style="color:var(--orange);">2. Dados para Entrega</h3>
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <input id="cli-nome" value="Maria Silva" placeholder="Nome completo" />
                   <input id="cli-tel" value="(11) 98888-7777" placeholder="WhatsApp" />
                   <input id="cli-end" value="Rua das Flores, 120 - Centro" placeholder="Endereço completo" />
-                  <select id="cli-pag">
-                    <option>Pix</option>
-                    <option>Cartão na Entrega</option>
-                    <option>Vale-Refeição</option>
-                    <option>Dinheiro</option>
-                  </select>
-                  <button class="btn btn-green" onclick="placeDemoOrder()">Confirmar Compra</button>
-                  <div id="order-feedback" class="hidden" style="background:#DCFCE7;color:#166534;padding:10px;border-radius:10px;font-size:12px;font-weight:700;"></div>
+                  <input id="cli-obs" value="Tocar interfone 42" placeholder="Observações (opcional)" />
+                  <div id="checkout-err" class="error-box hidden"></div>
+                  <button class="btn btn-orange" onclick="proceedToPayment()">Ir para Pagamento →</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- TELA 4: ADMIN GERENCIAR MARMITAS -->
+          <!-- TELA 4: PAGAMENTO (PIX QR CODE, CRÉDITO, DÉBITO, VALES, DINHEIRO) -->
+          <div id="tab-payment" class="tab-panel hidden">
+            <div id="pay-receipt-view" class="receipt-box hidden"></div>
+
+            <div id="pay-flow-view">
+              <div class="pay-banner">
+                <button class="btn btn-soft" onclick="switchTab('checkout')">← Voltar aos dados</button>
+                <div style="text-align:right;">
+                  <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;">Etapa 2 de 2 • Total a Pagar</div>
+                  <strong id="pay-amount-label" style="font-size:19px;color:var(--orange);">R$ 26,90</strong>
+                </div>
+              </div>
+
+              <div class="pay-grid" id="pay-method-grid"></div>
+
+              <!-- PAINEL PIX -->
+              <div id="pay-panel-pix" class="pay-panel pix">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                  <strong>Pague com Pix QR Code (Padrão EMV BACEN)</strong>
+                  <span class="badge badge-green" id="pix-timer-badge">Expira em 15:00</span>
+                </div>
+                <div class="qr-card">
+                  <div class="qr-svg-wrap" id="pix-qr-svg"></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;background:#FAF5EE;padding:8px 10px;border-radius:10px;font-size:11px;">
+                    <div><span class="muted">Recebedor</span><br /><strong id="pix-merchant">MARMITEXSOCIAL</strong></div>
+                    <div><span class="muted">Identificador (txid)</span><br /><strong id="pix-txid" style="font-family:Consolas,monospace;">MS1001</strong></div>
+                    <div style="grid-column:span 2;"><span class="muted">Chave Pix</span><br /><strong id="pix-key">contato@marmitexsocial.com.br</strong></div>
+                  </div>
+                </div>
+                <div style="margin-top:10px;">
+                  <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px;">Pix Copia e Cola</label>
+                  <div style="display:flex;gap:6px;">
+                    <input id="pix-brcode-input" readonly style="background:#fff;font-family:Consolas,monospace;font-size:11px;" />
+                    <button class="btn btn-dark" id="pix-copy-btn" onclick="copyPixCode()" style="white-space:nowrap;">Copiar</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PAINEL CARTÕES / VALES -->
+              <div id="pay-panel-card" class="pay-panel hidden">
+                <div class="mode-switch">
+                  <button class="mode-btn active" id="mode-online-btn" onclick="setPayMode('Online')">Pagar Online Agora</button>
+                  <button class="mode-btn" id="mode-entrega-btn" onclick="setPayMode('Entrega')">Na Entrega (Maquininha)</button>
+                </div>
+
+                <div id="brand-picker-wrap">
+                  <label id="brand-picker-label" style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;">Bandeira:</label>
+                  <div class="brand-chips" id="brand-chips"></div>
+                </div>
+
+                <div id="card-online-fields">
+                  <div class="card-preview">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <span id="preview-type" style="font-size:11px;font-weight:800;color:#FDBA74;text-transform:uppercase;">Cartão de Crédito</span>
+                      <span id="preview-brand" style="background:rgba(255,255,255,0.16);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;">Visa</span>
+                    </div>
+                    <div id="preview-number" style="margin:14px 0;font-family:Consolas,monospace;font-size:16px;font-weight:700;letter-spacing:2px;">•••• •••• •••• ••••</div>
+                    <div style="display:flex;justify-content:space-between;font-size:11px;">
+                      <div><span style="opacity:.6;font-size:9px;display:block;">TITULAR</span><strong id="preview-holder">MARIA SILVA</strong></div>
+                      <div style="text-align:right;"><span style="opacity:.6;font-size:9px;display:block;">VALIDADE</span><strong id="preview-exp">MM/AA</strong></div>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <input id="card-num" placeholder="Número do cartão (ex: 4111 1111 1111 4321)" maxlength="23" oninput="onCardNumberInput(this)" style="background:#fff;font-family:Consolas,monospace;" />
+                    <input id="card-holder" placeholder="Nome impresso no cartão" oninput="updateCardPreview()" style="background:#fff;text-transform:uppercase;" />
+                    <div class="form-2col">
+                      <input id="card-exp" placeholder="Validade (MM/AA)" maxlength="5" oninput="onCardExpiryInput(this)" style="background:#fff;font-family:Consolas,monospace;" />
+                      <input id="card-cvv" type="password" placeholder="CVV (3 ou 4 dígitos)" maxlength="4" style="background:#fff;font-family:Consolas,monospace;" />
+                    </div>
+                    <div id="installments-wrap">
+                      <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px;">Parcelamento (sem juros)</label>
+                      <select id="card-installments" style="background:#fff;font-weight:700;"></select>
+                    </div>
+                    <div class="flow-box" style="margin-top:0;background:#ECFDF5;border-color:#A7F3D0;color:#065F46;font-size:11px;">
+                      Segurança: apenas bandeira e os 4 últimos dígitos são gravados na planilha Excel (PAN e CVV nunca são salvos).
+                    </div>
+                  </div>
+                </div>
+
+                <div id="card-entrega-info" class="hidden" style="background:#fff;border:1px solid #FED7AA;border-radius:12px;padding:12px;font-size:12px;">
+                  <strong>Pagamento na maquininha com o entregador</strong>
+                  <p class="muted" id="entrega-brand-msg" style="margin-top:4px;">Levaremos a maquininha sem fio compatível com a bandeira selecionada.</p>
+                </div>
+              </div>
+
+              <!-- PAINEL DINHEIRO -->
+              <div id="pay-panel-cash" class="pay-panel hidden">
+                <label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;">Precisa de troco para quanto?</label>
+                <div class="brand-chips" id="cash-chips"></div>
+                <input id="cash-troco" placeholder="Ex: R$ 100,00 (deixe vazio se não precisar)" style="background:#fff;" />
+              </div>
+
+              <div id="pay-error" class="error-box hidden"></div>
+              <button class="btn btn-green" id="confirm-pay-btn" style="width:100%;padding:12px;font-size:13px;" onclick="confirmDemoPayment()">Já fiz o Pix • Confirmar Pedido</button>
+            </div>
+          </div>
+
+          <!-- TELA 5: ADMIN GERENCIAR MARMITAS -->
           <div id="tab-admin" class="tab-panel hidden">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
               <div>
@@ -300,7 +460,7 @@
             </div>
           </div>
 
-          <!-- TELA 5: MODAL CADASTRO / EDIÇÃO DE MARMITA -->
+          <!-- TELA 6: MODAL CADASTRO / EDIÇÃO DE MARMITA -->
           <div id="tab-adminform" class="tab-panel hidden">
             <div class="card" style="max-width:620px;margin:0 auto;">
               <h2 id="form-title">Cadastrar Nova Marmita</h2>
@@ -315,8 +475,8 @@
                   <label style="font-size:11px;font-weight:700;">Categoria *</label>
                   <select id="f-cat">
                     <option>Tradicional</option>
-                    <option>Fitness & Low Carb</option>
-                    <option>Vegetariana & Vegana</option>
+                    <option>Fitness &amp; Low Carb</option>
+                    <option>Vegetariana &amp; Vegana</option>
                     <option>Executiva</option>
                     <option>Gourmet</option>
                     <option>Massas</option>
@@ -348,17 +508,17 @@
             </div>
           </div>
 
-          <!-- TELA 6: ADMIN PEDIDOS -->
+          <!-- TELA 7: ADMIN PEDIDOS -->
           <div id="tab-orders" class="tab-panel hidden">
             <h2>Pedidos Recebidos</h2>
-            <p class="muted" style="margin-bottom:12px;">Acompanhe os pedidos e atualize o status salvo na aba <code>Pedidos</code> do Excel.</p>
+            <p class="muted" style="margin-bottom:12px;">Acompanhe os pedidos, status de pagamento e atualize o status salvo na aba <code>Pedidos</code> do Excel.</p>
             <div id="orders-list" style="display:flex;flex-direction:column;gap:10px;"></div>
           </div>
 
-          <!-- TELA 7: PLANILHA EXCEL -->
+          <!-- TELA 8: PLANILHA EXCEL -->
           <div id="tab-excel" class="tab-panel hidden">
             <div class="flow-box" style="margin-top:0;margin-bottom:12px;background:#ECFDF5;border-color:#A7F3D0;">
-              <strong>Arquivo físico:</strong> <code>server/data/marmitex_social.xlsx</code> — Aba <strong>Marmitas</strong> e Aba <strong>Pedidos</strong> sincronizadas em tempo real.
+              <strong>Persistência:</strong> <code>vercel-blob://db/marmitex_social.xlsx</code> (produção Vercel) / <code>server/data/marmitex_social.xlsx</code> (local).
             </div>
             <h3>Aba: Marmitas</h3>
             <div style="overflow-x:auto;margin-bottom:14px;">
@@ -370,7 +530,7 @@
             <h3>Aba: Pedidos</h3>
             <div style="overflow-x:auto;">
               <table>
-                <thead class="excel-head"><tr><th>id</th><th>clienteNome</th><th>itensResumo</th><th>total</th><th>status</th></tr></thead>
+                <thead class="excel-head"><tr><th>id</th><th>clienteNome</th><th>formaPagamento</th><th>pagamentoJson</th><th>total</th><th>status</th></tr></thead>
                 <tbody id="excel-pedidos"></tbody>
               </table>
             </div>
@@ -386,41 +546,163 @@
           <ul id="side-list" style="padding-left:18px;margin:10px 0 0;font-size:12px;"></ul>
         </div>
         <div class="card">
-          <h3>Navegação Rápida</h3>
-          <div class="flow-box"><strong>URL Cliente:</strong> <code>http://localhost:5173/#/</code></div>
-          <div class="flow-box"><strong>URL Admin:</strong> <code>http://localhost:5173/#/admin</code></div>
-          <div class="flow-box"><strong>API Health:</strong> <code>http://localhost:3001/api/health</code></div>
+          <h3>Navegação Rápida (Vercel &amp; Local)</h3>
+          <div class="flow-box"><strong>App Vercel:</strong><br /><code>https://client-one-theta-55.vercel.app/</code></div>
+          <div class="flow-box"><strong>Protótipo Vercel:</strong><br /><code>https://client-one-theta-55.vercel.app/prototipo.html</code></div>
+          <div class="flow-box"><strong>API Pix (Vercel):</strong><br /><code>POST /api/pagamentos/pix</code></div>
+          <div class="flow-box"><strong>Admin Local:</strong><br /><code>admin</code> / <code>admin123</code></div>
         </div>
       </aside>
     </div>
   </div>
 
+  <!-- QR_BUNDLE_START -->
+  <script>(()=>{var Me=Object.create;var Tt=Object.defineProperty;var Se=Object.getOwnPropertyDescriptor;var be=Object.getOwnPropertyNames;var Pe=Object.getPrototypeOf,Re=Object.prototype.hasOwnProperty;var h=(n,t)=>()=>(t||n((t={exports:{}}).exports,t),t.exports);var Le=(n,t,e,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let o of be(t))!Re.call(n,o)&&o!==e&&Tt(n,o,{get:()=>t[o],enumerable:!(r=Se(t,o))||r.enumerable});return n};var Mt=(n,t,e)=>(e=n!=null?Me(Pe(n)):{},Le(t||!n||!n.__esModule?Tt(e,"default",{value:n,enumerable:!0}):e,n));var I=h(b=>{var ot,_e=[0,26,44,70,100,134,172,196,242,292,346,404,466,532,581,655,733,815,901,991,1085,1156,1258,1364,1474,1588,1706,1828,1921,2051,2185,2323,2465,2611,2761,2876,3034,3196,3362,3532,3706];b.getSymbolSize=function(t){if(!t)throw new Error('"version" cannot be null or undefined');if(t<1||t>40)throw new Error('"version" should be in range from 1 to 40');return t*4+17};b.getSymbolTotalCodewords=function(t){return _e[t]};b.getBCHDigit=function(n){let t=0;for(;n!==0;)t++,n>>>=1;return t};b.setToSJISFunction=function(t){if(typeof t!="function")throw new Error('"toSJISFunc" is not a valid function.');ot=t};b.isKanjiModeEnabled=function(){return typeof ot<"u"};b.toSJIS=function(t){return ot(t)}});var O=h(m=>{m.L={bit:1};m.M={bit:0};m.Q={bit:3};m.H={bit:2};function xe(n){if(typeof n!="string")throw new Error("Param is not a string");switch(n.toLowerCase()){case"l":case"low":return m.L;case"m":case"medium":return m.M;case"q":case"quartile":return m.Q;case"h":case"high":return m.H;default:throw new Error("Unknown EC Level: "+n)}}m.isValid=function(t){return t&&typeof t.bit<"u"&&t.bit>=0&&t.bit<4};m.from=function(t,e){if(m.isValid(t))return t;try{return xe(t)}catch{return e}}});var Pt=h((Tn,bt)=>{function St(){this.buffer=[],this.length=0}St.prototype={get:function(n){let t=Math.floor(n/8);return(this.buffer[t]>>>7-n%8&1)===1},put:function(n,t){for(let e=0;e<t;e++)this.putBit((n>>>t-e-1&1)===1)},getLengthInBits:function(){return this.length},putBit:function(n){let t=Math.floor(this.length/8);this.buffer.length<=t&&this.buffer.push(0),n&&(this.buffer[t]|=128>>>this.length%8),this.length++}};bt.exports=St});var Lt=h((Mn,Rt)=>{function k(n){if(!n||n<1)throw new Error("BitMatrix size must be defined and greater than 0");this.size=n,this.data=new Uint8Array(n*n),this.reservedBit=new Uint8Array(n*n)}k.prototype.set=function(n,t,e,r){let o=n*this.size+t;this.data[o]=e,r&&(this.reservedBit[o]=!0)};k.prototype.get=function(n,t){return this.data[n*this.size+t]};k.prototype.xor=function(n,t,e){this.data[n*this.size+t]^=e};k.prototype.isReserved=function(n,t){return this.reservedBit[n*this.size+t]};Rt.exports=k});var _t=h(v=>{var Fe=I().getSymbolSize;v.getRowColCoords=function(t){if(t===1)return[];let e=Math.floor(t/7)+2,r=Fe(t),o=r===145?26:Math.ceil((r-13)/(2*e-2))*2,i=[r-7];for(let s=1;s<e-1;s++)i[s]=i[s-1]-o;return i.push(6),i.reverse()};v.getPositions=function(t){let e=[],r=v.getRowColCoords(t),o=r.length;for(let i=0;i<o;i++)for(let s=0;s<o;s++)i===0&&s===0||i===0&&s===o-1||i===o-1&&s===0||e.push([r[i],r[s]]);return e}});var Ut=h(Ft=>{var Ue=I().getSymbolSize,xt=7;Ft.getPositions=function(t){let e=Ue(t);return[[0,0],[e-xt,0],[0,e-xt]]}});var qt=h(g=>{g.Patterns={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7};var P={N1:3,N2:3,N3:40,N4:10};g.isValid=function(t){return t!=null&&t!==""&&!isNaN(t)&&t>=0&&t<=7};g.from=function(t){return g.isValid(t)?parseInt(t,10):void 0};g.getPenaltyN1=function(t){let e=t.size,r=0,o=0,i=0,s=null,u=null;for(let c=0;c<e;c++){o=i=0,s=u=null;for(let l=0;l<e;l++){let a=t.get(c,l);a===s?o++:(o>=5&&(r+=P.N1+(o-5)),s=a,o=1),a=t.get(l,c),a===u?i++:(i>=5&&(r+=P.N1+(i-5)),u=a,i=1)}o>=5&&(r+=P.N1+(o-5)),i>=5&&(r+=P.N1+(i-5))}return r};g.getPenaltyN2=function(t){let e=t.size,r=0;for(let o=0;o<e-1;o++)for(let i=0;i<e-1;i++){let s=t.get(o,i)+t.get(o,i+1)+t.get(o+1,i)+t.get(o+1,i+1);(s===4||s===0)&&r++}return r*P.N2};g.getPenaltyN3=function(t){let e=t.size,r=0,o=0,i=0;for(let s=0;s<e;s++){o=i=0;for(let u=0;u<e;u++)o=o<<1&2047|t.get(s,u),u>=10&&(o===1488||o===93)&&r++,i=i<<1&2047|t.get(u,s),u>=10&&(i===1488||i===93)&&r++}return r*P.N3};g.getPenaltyN4=function(t){let e=0,r=t.data.length;for(let i=0;i<r;i++)e+=t.data[i];return Math.abs(Math.ceil(e*100/r/5)-10)*P.N4};function qe(n,t,e){switch(n){case g.Patterns.PATTERN000:return(t+e)%2===0;case g.Patterns.PATTERN001:return t%2===0;case g.Patterns.PATTERN010:return e%3===0;case g.Patterns.PATTERN011:return(t+e)%3===0;case g.Patterns.PATTERN100:return(Math.floor(t/2)+Math.floor(e/3))%2===0;case g.Patterns.PATTERN101:return t*e%2+t*e%3===0;case g.Patterns.PATTERN110:return(t*e%2+t*e%3)%2===0;case g.Patterns.PATTERN111:return(t*e%3+(t+e)%2)%2===0;default:throw new Error("bad maskPattern:"+n)}}g.applyMask=function(t,e){let r=e.size;for(let o=0;o<r;o++)for(let i=0;i<r;i++)e.isReserved(i,o)||e.xor(i,o,qe(t,i,o))};g.getBestMask=function(t,e){let r=Object.keys(g.Patterns).length,o=0,i=1/0;for(let s=0;s<r;s++){e(s),g.applyMask(s,t);let u=g.getPenaltyN1(t)+g.getPenaltyN2(t)+g.getPenaltyN3(t)+g.getPenaltyN4(t);g.applyMask(s,t),u<i&&(i=u,o=s)}return o}});var st=h(it=>{var T=O(),j=[1,1,1,1,1,1,1,1,1,1,2,2,1,2,2,4,1,2,4,4,2,4,4,4,2,4,6,5,2,4,6,6,2,5,8,8,4,5,8,8,4,5,8,11,4,8,10,11,4,9,12,16,4,9,16,16,6,10,12,18,6,10,17,16,6,11,16,19,6,13,18,21,7,14,21,25,8,16,20,25,8,17,23,25,9,17,23,34,9,18,25,30,10,20,27,32,12,21,29,35,12,23,34,37,12,25,34,40,13,26,35,42,14,28,38,45,15,29,40,48,16,31,43,51,17,33,45,54,18,35,48,57,19,37,51,60,19,38,53,63,20,40,56,66,21,43,59,70,22,45,62,74,24,47,65,77,25,49,68,81],G=[7,10,13,17,10,16,22,28,15,26,36,44,20,36,52,64,26,48,72,88,36,64,96,112,40,72,108,130,48,88,132,156,60,110,160,192,72,130,192,224,80,150,224,264,96,176,260,308,104,198,288,352,120,216,320,384,132,240,360,432,144,280,408,480,168,308,448,532,180,338,504,588,196,364,546,650,224,416,600,700,224,442,644,750,252,476,690,816,270,504,750,900,300,560,810,960,312,588,870,1050,336,644,952,1110,360,700,1020,1200,390,728,1050,1260,420,784,1140,1350,450,812,1200,1440,480,868,1290,1530,510,924,1350,1620,540,980,1440,1710,570,1036,1530,1800,570,1064,1590,1890,600,1120,1680,1980,630,1204,1770,2100,660,1260,1860,2220,720,1316,1950,2310,750,1372,2040,2430];it.getBlocksCount=function(t,e){switch(e){case T.L:return j[(t-1)*4+0];case T.M:return j[(t-1)*4+1];case T.Q:return j[(t-1)*4+2];case T.H:return j[(t-1)*4+3];default:return}};it.getTotalCodewordsCount=function(t,e){switch(e){case T.L:return G[(t-1)*4+0];case T.M:return G[(t-1)*4+1];case T.Q:return G[(t-1)*4+2];case T.H:return G[(t-1)*4+3];default:return}}});var Dt=h($=>{var z=new Uint8Array(512),Q=new Uint8Array(256);(function(){let t=1;for(let e=0;e<255;e++)z[e]=t,Q[t]=e,t<<=1,t&256&&(t^=285);for(let e=255;e<512;e++)z[e]=z[e-255]})();$.log=function(t){if(t<1)throw new Error("log("+t+")");return Q[t]};$.exp=function(t){return z[t]};$.mul=function(t,e){return t===0||e===0?0:z[Q[t]+Q[e]]}});var kt=h(V=>{var ut=Dt();V.mul=function(t,e){let r=new Uint8Array(t.length+e.length-1);for(let o=0;o<t.length;o++)for(let i=0;i<e.length;i++)r[o+i]^=ut.mul(t[o],e[i]);return r};V.mod=function(t,e){let r=new Uint8Array(t);for(;r.length-e.length>=0;){let o=r[0];for(let s=0;s<e.length;s++)r[s]^=ut.mul(e[s],o);let i=0;for(;i<r.length&&r[i]===0;)i++;r=r.slice(i)}return r};V.generateECPolynomial=function(t){let e=new Uint8Array([1]);for(let r=0;r<t;r++)e=V.mul(e,new Uint8Array([1,ut.exp(r)]));return e}});var Ht=h((xn,Vt)=>{var zt=kt();function ct(n){this.genPoly=void 0,this.degree=n,this.degree&&this.initialize(this.degree)}ct.prototype.initialize=function(t){this.degree=t,this.genPoly=zt.generateECPolynomial(this.degree)};ct.prototype.encode=function(t){if(!this.genPoly)throw new Error("Encoder not initialized");let e=new Uint8Array(t.length+this.degree);e.set(t);let r=zt.mod(e,this.genPoly),o=this.degree-r.length;if(o>0){let i=new Uint8Array(this.degree);return i.set(r,o),i}return r};Vt.exports=ct});var lt=h(Kt=>{Kt.isValid=function(t){return!isNaN(t)&&t>=1&&t<=40}});var at=h(B=>{var Jt="[0-9]+",De="[A-Z $%*+\\-./:]+",H="(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+";H=H.replace(/u/g,"\\u");var ke="(?:(?![A-Z0-9 $%*+\\-./:]|"+H+`)(?:.|[\r
+]))+`;B.KANJI=new RegExp(H,"g");B.BYTE_KANJI=new RegExp("[^A-Z0-9 $%*+\\-./:]+","g");B.BYTE=new RegExp(ke,"g");B.NUMERIC=new RegExp(Jt,"g");B.ALPHANUMERIC=new RegExp(De,"g");var ze=new RegExp("^"+H+"$"),Ve=new RegExp("^"+Jt+"$"),He=new RegExp("^[A-Z0-9 $%*+\\-./:]+$");B.testKanji=function(t){return ze.test(t)};B.testNumeric=function(t){return Ve.test(t)};B.testAlphanumeric=function(t){return He.test(t)}});var M=h(p=>{var Ke=lt(),ft=at();p.NUMERIC={id:"Numeric",bit:1,ccBits:[10,12,14]};p.ALPHANUMERIC={id:"Alphanumeric",bit:2,ccBits:[9,11,13]};p.BYTE={id:"Byte",bit:4,ccBits:[8,16,16]};p.KANJI={id:"Kanji",bit:8,ccBits:[8,10,12]};p.MIXED={bit:-1};p.getCharCountIndicator=function(t,e){if(!t.ccBits)throw new Error("Invalid mode: "+t);if(!Ke.isValid(e))throw new Error("Invalid version: "+e);return e>=1&&e<10?t.ccBits[0]:e<27?t.ccBits[1]:t.ccBits[2]};p.getBestModeForData=function(t){return ft.testNumeric(t)?p.NUMERIC:ft.testAlphanumeric(t)?p.ALPHANUMERIC:ft.testKanji(t)?p.KANJI:p.BYTE};p.toString=function(t){if(t&&t.id)return t.id;throw new Error("Invalid mode")};p.isValid=function(t){return t&&t.bit&&t.ccBits};function Je(n){if(typeof n!="string")throw new Error("Param is not a string");switch(n.toLowerCase()){case"numeric":return p.NUMERIC;case"alphanumeric":return p.ALPHANUMERIC;case"kanji":return p.KANJI;case"byte":return p.BYTE;default:throw new Error("Unknown mode: "+n)}}p.from=function(t,e){if(p.isValid(t))return t;try{return Je(t)}catch{return e}}});var Gt=h(R=>{var Z=I(),Ye=st(),Yt=O(),S=M(),gt=lt(),vt=7973,Ot=Z.getBCHDigit(vt);function Oe(n,t,e){for(let r=1;r<=40;r++)if(t<=R.getCapacity(r,e,n))return r}function jt(n,t){return S.getCharCountIndicator(n,t)+4}function ve(n,t){let e=0;return n.forEach(function(r){let o=jt(r.mode,t);e+=o+r.getBitsLength()}),e}function je(n,t){for(let e=1;e<=40;e++)if(ve(n,e)<=R.getCapacity(e,t,S.MIXED))return e}R.from=function(t,e){return gt.isValid(t)?parseInt(t,10):e};R.getCapacity=function(t,e,r){if(!gt.isValid(t))throw new Error("Invalid QR Code version");typeof r>"u"&&(r=S.BYTE);let o=Z.getSymbolTotalCodewords(t),i=Ye.getTotalCodewordsCount(t,e),s=(o-i)*8;if(r===S.MIXED)return s;let u=s-jt(r,t);switch(r){case S.NUMERIC:return Math.floor(u/10*3);case S.ALPHANUMERIC:return Math.floor(u/11*2);case S.KANJI:return Math.floor(u/13);case S.BYTE:default:return Math.floor(u/8)}};R.getBestVersionForData=function(t,e){let r,o=Yt.from(e,Yt.M);if(Array.isArray(t)){if(t.length>1)return je(t,o);if(t.length===0)return 1;r=t[0]}else r=t;return Oe(r.mode,r.getLength(),o)};R.getEncodedBits=function(t){if(!gt.isValid(t)||t<7)throw new Error("Invalid QR Code version");let e=t<<12;for(;Z.getBCHDigit(e)-Ot>=0;)e^=vt<<Z.getBCHDigit(e)-Ot;return t<<12|e}});var Wt=h(Zt=>{var dt=I(),$t=1335,Ge=21522,Qt=dt.getBCHDigit($t);Zt.getEncodedBits=function(t,e){let r=t.bit<<3|e,o=r<<10;for(;dt.getBCHDigit(o)-Qt>=0;)o^=$t<<dt.getBCHDigit(o)-Qt;return(r<<10|o)^Ge}});var te=h((zn,Xt)=>{var Qe=M();function x(n){this.mode=Qe.NUMERIC,this.data=n.toString()}x.getBitsLength=function(t){return 10*Math.floor(t/3)+(t%3?t%3*3+1:0)};x.prototype.getLength=function(){return this.data.length};x.prototype.getBitsLength=function(){return x.getBitsLength(this.data.length)};x.prototype.write=function(t){let e,r,o;for(e=0;e+3<=this.data.length;e+=3)r=this.data.substr(e,3),o=parseInt(r,10),t.put(o,10);let i=this.data.length-e;i>0&&(r=this.data.substr(e),o=parseInt(r,10),t.put(o,i*3+1))};Xt.exports=x});var ne=h((Vn,ee)=>{var $e=M(),ht=["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"," ","$","%","*","+","-",".","/",":"];function F(n){this.mode=$e.ALPHANUMERIC,this.data=n}F.getBitsLength=function(t){return 11*Math.floor(t/2)+6*(t%2)};F.prototype.getLength=function(){return this.data.length};F.prototype.getBitsLength=function(){return F.getBitsLength(this.data.length)};F.prototype.write=function(t){let e;for(e=0;e+2<=this.data.length;e+=2){let r=ht.indexOf(this.data[e])*45;r+=ht.indexOf(this.data[e+1]),t.put(r,11)}this.data.length%2&&t.put(ht.indexOf(this.data[e]),6)};ee.exports=F});var oe=h((Hn,re)=>{var Ze=M();function U(n){this.mode=Ze.BYTE,typeof n=="string"?this.data=new TextEncoder().encode(n):this.data=new Uint8Array(n)}U.getBitsLength=function(t){return t*8};U.prototype.getLength=function(){return this.data.length};U.prototype.getBitsLength=function(){return U.getBitsLength(this.data.length)};U.prototype.write=function(n){for(let t=0,e=this.data.length;t<e;t++)n.put(this.data[t],8)};re.exports=U});var se=h((Kn,ie)=>{var We=M(),Xe=I();function q(n){this.mode=We.KANJI,this.data=n}q.getBitsLength=function(t){return t*13};q.prototype.getLength=function(){return this.data.length};q.prototype.getBitsLength=function(){return q.getBitsLength(this.data.length)};q.prototype.write=function(n){let t;for(t=0;t<this.data.length;t++){let e=Xe.toSJIS(this.data[t]);if(e>=33088&&e<=40956)e-=33088;else if(e>=57408&&e<=60351)e-=49472;else throw new Error("Invalid SJIS character: "+this.data[t]+`
+Make sure your charset is UTF-8`);e=(e>>>8&255)*192+(e&255),n.put(e,13)}};ie.exports=q});var ue=h((Jn,pt)=>{"use strict";var K={single_source_shortest_paths:function(n,t,e){var r={},o={};o[t]=0;var i=K.PriorityQueue.make();i.push(t,0);for(var s,u,c,l,a,w,d,E,A;!i.empty();){s=i.pop(),u=s.value,l=s.cost,a=n[u]||{};for(c in a)a.hasOwnProperty(c)&&(w=a[c],d=l+w,E=o[c],A=typeof o[c]>"u",(A||E>d)&&(o[c]=d,i.push(c,d),r[c]=u))}if(typeof e<"u"&&typeof o[e]>"u"){var N=["Could not find a path from ",t," to ",e,"."].join("");throw new Error(N)}return r},extract_shortest_path_from_predecessor_list:function(n,t){for(var e=[],r=t,o;r;)e.push(r),o=n[r],r=n[r];return e.reverse(),e},find_path:function(n,t,e){var r=K.single_source_shortest_paths(n,t,e);return K.extract_shortest_path_from_predecessor_list(r,e)},PriorityQueue:{make:function(n){var t=K.PriorityQueue,e={},r;n=n||{};for(r in t)t.hasOwnProperty(r)&&(e[r]=t[r]);return e.queue=[],e.sorter=n.sorter||t.default_sorter,e},default_sorter:function(n,t){return n.cost-t.cost},push:function(n,t){var e={value:n,cost:t};this.queue.push(e),this.queue.sort(this.sorter)},pop:function(){return this.queue.shift()},empty:function(){return this.queue.length===0}}};typeof pt<"u"&&(pt.exports=K)});var pe=h(D=>{var f=M(),ae=te(),fe=ne(),ge=oe(),de=se(),J=at(),W=I(),tn=ue();function ce(n){return unescape(encodeURIComponent(n)).length}function Y(n,t,e){let r=[],o;for(;(o=n.exec(e))!==null;)r.push({data:o[0],index:o.index,mode:t,length:o[0].length});return r}function he(n){let t=Y(J.NUMERIC,f.NUMERIC,n),e=Y(J.ALPHANUMERIC,f.ALPHANUMERIC,n),r,o;return W.isKanjiModeEnabled()?(r=Y(J.BYTE,f.BYTE,n),o=Y(J.KANJI,f.KANJI,n)):(r=Y(J.BYTE_KANJI,f.BYTE,n),o=[]),t.concat(e,r,o).sort(function(s,u){return s.index-u.index}).map(function(s){return{data:s.data,mode:s.mode,length:s.length}})}function wt(n,t){switch(t){case f.NUMERIC:return ae.getBitsLength(n);case f.ALPHANUMERIC:return fe.getBitsLength(n);case f.KANJI:return de.getBitsLength(n);case f.BYTE:return ge.getBitsLength(n)}}function en(n){return n.reduce(function(t,e){let r=t.length-1>=0?t[t.length-1]:null;return r&&r.mode===e.mode?(t[t.length-1].data+=e.data,t):(t.push(e),t)},[])}function nn(n){let t=[];for(let e=0;e<n.length;e++){let r=n[e];switch(r.mode){case f.NUMERIC:t.push([r,{data:r.data,mode:f.ALPHANUMERIC,length:r.length},{data:r.data,mode:f.BYTE,length:r.length}]);break;case f.ALPHANUMERIC:t.push([r,{data:r.data,mode:f.BYTE,length:r.length}]);break;case f.KANJI:t.push([r,{data:r.data,mode:f.BYTE,length:ce(r.data)}]);break;case f.BYTE:t.push([{data:r.data,mode:f.BYTE,length:ce(r.data)}])}}return t}function rn(n,t){let e={},r={start:{}},o=["start"];for(let i=0;i<n.length;i++){let s=n[i],u=[];for(let c=0;c<s.length;c++){let l=s[c],a=""+i+c;u.push(a),e[a]={node:l,lastCount:0},r[a]={};for(let w=0;w<o.length;w++){let d=o[w];e[d]&&e[d].node.mode===l.mode?(r[d][a]=wt(e[d].lastCount+l.length,l.mode)-wt(e[d].lastCount,l.mode),e[d].lastCount+=l.length):(e[d]&&(e[d].lastCount=l.length),r[d][a]=wt(l.length,l.mode)+4+f.getCharCountIndicator(l.mode,t))}}o=u}for(let i=0;i<o.length;i++)r[o[i]].end=0;return{map:r,table:e}}function le(n,t){let e,r=f.getBestModeForData(n);if(e=f.from(t,r),e!==f.BYTE&&e.bit<r.bit)throw new Error('"'+n+'" cannot be encoded with mode '+f.toString(e)+`.
+ Suggested mode is: `+f.toString(r));switch(e===f.KANJI&&!W.isKanjiModeEnabled()&&(e=f.BYTE),e){case f.NUMERIC:return new ae(n);case f.ALPHANUMERIC:return new fe(n);case f.KANJI:return new de(n);case f.BYTE:return new ge(n)}}D.fromArray=function(t){return t.reduce(function(e,r){return typeof r=="string"?e.push(le(r,null)):r.data&&e.push(le(r.data,r.mode)),e},[])};D.fromString=function(t,e){let r=he(t,W.isKanjiModeEnabled()),o=nn(r),i=rn(o,e),s=tn.find_path(i.map,"start","end"),u=[];for(let c=1;c<s.length-1;c++)u.push(i.table[s[c]].node);return D.fromArray(en(u))};D.rawSplit=function(t){return D.fromArray(he(t,W.isKanjiModeEnabled()))}});var me=h(we=>{var tt=I(),mt=O(),on=Pt(),sn=Lt(),un=_t(),cn=Ut(),Ct=qt(),Bt=st(),ln=Ht(),X=Gt(),an=Wt(),fn=M(),Et=pe();function gn(n,t){let e=n.size,r=cn.getPositions(t);for(let o=0;o<r.length;o++){let i=r[o][0],s=r[o][1];for(let u=-1;u<=7;u++)if(!(i+u<=-1||e<=i+u))for(let c=-1;c<=7;c++)s+c<=-1||e<=s+c||(u>=0&&u<=6&&(c===0||c===6)||c>=0&&c<=6&&(u===0||u===6)||u>=2&&u<=4&&c>=2&&c<=4?n.set(i+u,s+c,!0,!0):n.set(i+u,s+c,!1,!0))}}function dn(n){let t=n.size;for(let e=8;e<t-8;e++){let r=e%2===0;n.set(e,6,r,!0),n.set(6,e,r,!0)}}function hn(n,t){let e=un.getPositions(t);for(let r=0;r<e.length;r++){let o=e[r][0],i=e[r][1];for(let s=-2;s<=2;s++)for(let u=-2;u<=2;u++)s===-2||s===2||u===-2||u===2||s===0&&u===0?n.set(o+s,i+u,!0,!0):n.set(o+s,i+u,!1,!0)}}function pn(n,t){let e=n.size,r=X.getEncodedBits(t),o,i,s;for(let u=0;u<18;u++)o=Math.floor(u/3),i=u%3+e-8-3,s=(r>>u&1)===1,n.set(o,i,s,!0),n.set(i,o,s,!0)}function yt(n,t,e){let r=n.size,o=an.getEncodedBits(t,e),i,s;for(i=0;i<15;i++)s=(o>>i&1)===1,i<6?n.set(i,8,s,!0):i<8?n.set(i+1,8,s,!0):n.set(r-15+i,8,s,!0),i<8?n.set(8,r-i-1,s,!0):i<9?n.set(8,15-i-1+1,s,!0):n.set(8,15-i-1,s,!0);n.set(r-8,8,1,!0)}function wn(n,t){let e=n.size,r=-1,o=e-1,i=7,s=0;for(let u=e-1;u>0;u-=2)for(u===6&&u--;;){for(let c=0;c<2;c++)if(!n.isReserved(o,u-c)){let l=!1;s<t.length&&(l=(t[s]>>>i&1)===1),n.set(o,u-c,l),i--,i===-1&&(s++,i=7)}if(o+=r,o<0||e<=o){o-=r,r=-r;break}}}function mn(n,t,e){let r=new on;e.forEach(function(c){r.put(c.mode.bit,4),r.put(c.getLength(),fn.getCharCountIndicator(c.mode,n)),c.write(r)});let o=tt.getSymbolTotalCodewords(n),i=Bt.getTotalCodewordsCount(n,t),s=(o-i)*8;for(r.getLengthInBits()+4<=s&&r.put(0,4);r.getLengthInBits()%8!==0;)r.putBit(0);let u=(s-r.getLengthInBits())/8;for(let c=0;c<u;c++)r.put(c%2?17:236,8);return En(r,n,t)}function En(n,t,e){let r=tt.getSymbolTotalCodewords(t),o=Bt.getTotalCodewordsCount(t,e),i=r-o,s=Bt.getBlocksCount(t,e),u=r%s,c=s-u,l=Math.floor(r/s),a=Math.floor(i/s),w=a+1,d=l-a,E=new ln(d),A=0,N=new Array(s),Nt=new Array(s),et=0,Te=new Uint8Array(n.buffer);for(let _=0;_<s;_++){let rt=_<c?a:w;N[_]=Te.slice(A,A+rt),Nt[_]=E.encode(N[_]),A+=rt,et=Math.max(et,rt)}let nt=new Uint8Array(r),It=0,y,C;for(y=0;y<et;y++)for(C=0;C<s;C++)y<N[C].length&&(nt[It++]=N[C][y]);for(y=0;y<d;y++)for(C=0;C<s;C++)nt[It++]=Nt[C][y];return nt}function yn(n,t,e,r){let o;if(Array.isArray(n))o=Et.fromArray(n);else if(typeof n=="string"){let l=t;if(!l){let a=Et.rawSplit(n);l=X.getBestVersionForData(a,e)}o=Et.fromString(n,l||40)}else throw new Error("Invalid data");let i=X.getBestVersionForData(o,e);if(!i)throw new Error("The amount of data is too big to be stored in a QR Code");if(!t)t=i;else if(t<i)throw new Error(`
+The chosen QR Code version cannot contain this amount of data.
+Minimum version required to store current data is: `+i+`.
+`);let s=mn(t,e,o),u=tt.getSymbolSize(t),c=new sn(u);return gn(c,t),dn(c),hn(c,t),yt(c,e,0),t>=7&&pn(c,t),wn(c,s),isNaN(r)&&(r=Ct.getBestMask(c,yt.bind(null,c,e))),Ct.applyMask(r,c),yt(c,e,r),{modules:c,version:t,errorCorrectionLevel:e,maskPattern:r,segments:o}}we.create=function(t,e){if(typeof t>"u"||t==="")throw new Error("No input text");let r=mt.M,o,i;return typeof e<"u"&&(r=mt.from(e.errorCorrectionLevel,mt.M),o=X.from(e.version),i=Ct.from(e.maskPattern),e.toSJISFunc&&tt.setToSJISFunction(e.toSJISFunc)),yn(t,o,r,i)}});var ye=h(L=>{function Ee(n){if(typeof n=="number"&&(n=n.toString()),typeof n!="string")throw new Error("Color should be defined as hex string");let t=n.slice().replace("#","").split("");if(t.length<3||t.length===5||t.length>8)throw new Error("Invalid hex color: "+n);(t.length===3||t.length===4)&&(t=Array.prototype.concat.apply([],t.map(function(r){return[r,r]}))),t.length===6&&t.push("F","F");let e=parseInt(t.join(""),16);return{r:e>>24&255,g:e>>16&255,b:e>>8&255,a:e&255,hex:"#"+t.slice(0,6).join("")}}L.getOptions=function(t){t||(t={}),t.color||(t.color={});let e=typeof t.margin>"u"||t.margin===null||t.margin<0?4:t.margin,r=t.width&&t.width>=21?t.width:void 0,o=t.scale||4;return{width:r,scale:r?4:o,margin:e,color:{dark:Ee(t.color.dark||"#000000ff"),light:Ee(t.color.light||"#ffffffff")},type:t.type,rendererOpts:t.rendererOpts||{}}};L.getScale=function(t,e){return e.width&&e.width>=t+e.margin*2?e.width/(t+e.margin*2):e.scale};L.getImageWidth=function(t,e){let r=L.getScale(t,e);return Math.floor((t+e.margin*2)*r)};L.qrToImageData=function(t,e,r){let o=e.modules.size,i=e.modules.data,s=L.getScale(o,r),u=Math.floor((o+r.margin*2)*s),c=r.margin*s,l=[r.color.light,r.color.dark];for(let a=0;a<u;a++)for(let w=0;w<u;w++){let d=(a*u+w)*4,E=r.color.light;if(a>=c&&w>=c&&a<u-c&&w<u-c){let A=Math.floor((a-c)/s),N=Math.floor((w-c)/s);E=l[i[A*o+N]?1:0]}t[d++]=E.r,t[d++]=E.g,t[d++]=E.b,t[d]=E.a}}});var Ae=h(Be=>{var Cn=ye();function Ce(n,t){let e=n.a/255,r=t+'="'+n.hex+'"';return e<1?r+" "+t+'-opacity="'+e.toFixed(2).slice(1)+'"':r}function At(n,t,e){let r=n+t;return typeof e<"u"&&(r+=" "+e),r}function Bn(n,t,e){let r="",o=0,i=!1,s=0;for(let u=0;u<n.length;u++){let c=Math.floor(u%t),l=Math.floor(u/t);!c&&!i&&(i=!0),n[u]?(s++,u>0&&c>0&&n[u-1]||(r+=i?At("M",c+e,.5+l+e):At("m",o,0),o=0,i=!1),c+1<t&&n[u+1]||(r+=At("h",s),s=0)):o++}return r}Be.render=function(t,e,r){let o=Cn.getOptions(e),i=t.modules.size,s=t.modules.data,u=i+o.margin*2,c=o.color.light.a?"<path "+Ce(o.color.light,"fill")+' d="M0 0h'+u+"v"+u+'H0z"/>':"",l="<path "+Ce(o.color.dark,"stroke")+' d="'+Bn(s,i,o.margin)+'"/>',a='viewBox="0 0 '+u+" "+u+'"',d='<svg xmlns="http://www.w3.org/2000/svg" '+(o.width?'width="'+o.width+'" height="'+o.width+'" ':"")+a+' shape-rendering="crispEdges">'+c+l+`</svg>
+`;return typeof r=="function"&&r(null,d),d}});var Ne=Mt(me()),Ie=Mt(Ae());window.renderPixQrSvg=n=>Ie.default.render(Ne.default.create(String(n||""),{errorCorrectionLevel:"M"}),{margin:2,color:{dark:"#1C1917",light:"#FFFFFF"}});})();
+</script>
+  <!-- QR_BUNDLE_END -->
+
   <script>
+    function getImageUrl(filename) {
+      if (window.location.protocol === 'file:') {
+        // If opened inside docs/, relative path works; if extracted to %LOCALAPPDATA%, fallback hits Vercel
+        const normalized = window.location.pathname.replace(/\\/g, '/').toLowerCase();
+        if (normalized.includes('/docs/')) {
+          return '../client/public/images/marmitas/' + filename;
+        }
+        return 'https://client-one-theta-55.vercel.app/images/marmitas/' + filename;
+      }
+      return '/images/marmitas/' + filename;
+    }
+
+    function fallbackDishSvg(label) {
+      const safe = String(label || 'MarmitexSocial').replace(/[<>&"]/g, '');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#EA580C"/><stop offset="100%" stop-color="#F59E0B"/></linearGradient></defs><rect width="400" height="240" fill="url(#g)"/><circle cx="200" cy="108" r="56" fill="#FFFBF5" opacity="0.92"/><text x="200" y="198" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI,sans-serif" font-weight="700" font-size="18">${safe.slice(0, 26)}</text></svg>`;
+      return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    }
+
+    function onDishImgError(imgEl, filename, label) {
+      if (!imgEl.dataset.retriedVercel && window.location.protocol === 'file:') {
+        imgEl.dataset.retriedVercel = '1';
+        imgEl.src = 'https://client-one-theta-55.vercel.app/images/marmitas/' + filename;
+        return;
+      }
+      imgEl.onerror = null;
+      imgEl.src = fallbackDishSvg(label);
+    }
+
+    // EMV BACEN Pix BR Code generator matching server/src/utils/pix.js
+    function stripAccents(value) {
+      return String(value == null ? '' : value).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    function sanitizePixText(value, maxLen, upper = true) {
+      const cleaned = stripAccents(value).replace(/[^A-Za-z0-9 .\-@/]/g, ' ').replace(/\s+/g, ' ').trim();
+      return (upper ? cleaned.toUpperCase() : cleaned).slice(0, maxLen);
+    }
+    function emvField(id, value) {
+      const str = String(value == null ? '' : value);
+      return id + String(str.length).padStart(2, '0') + str;
+    }
+    function crc16Ccitt(payload) {
+      let crc = 0xffff;
+      for (let i = 0; i < payload.length; i += 1) {
+        crc ^= payload.charCodeAt(i) << 8;
+        for (let b = 0; b < 8; b += 1) {
+          crc = (crc & 0x8000) !== 0 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+        }
+      }
+      return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+    function generateDemoPix(valor, nome) {
+      const txid = stripAccents('MS' + Date.now()).replace(/[^A-Za-z0-9]/g, '').slice(0, 25);
+      const firstName = sanitizePixText((nome || 'Cliente').split(' ')[0], 14, false) || 'Cliente';
+      const merchantAccount = [
+        emvField('00', 'br.gov.bcb.pix'),
+        emvField('01', 'contato@marmitexsocial.com.br'),
+        emvField('02', 'Pedido ' + firstName),
+      ].join('');
+      const base = [
+        emvField('00', '01'),
+        emvField('01', '11'),
+        emvField('26', merchantAccount),
+        emvField('52', '5812'),
+        emvField('53', '986'),
+        emvField('54', Number(valor || 26.9).toFixed(2)),
+        emvField('58', 'BR'),
+        emvField('59', 'MARMITEXSOCIAL'),
+        emvField('60', 'SAO PAULO'),
+        emvField('62', emvField('05', txid)),
+        '6304',
+      ].join('');
+      return { brCode: base + crc16Ccitt(base), txid };
+    }
+
+    const PAY_METHODS = [
+      { id: 'pix', label: 'Pix', method: 'Pix', tag: 'QR Code', sub: 'Copia e Cola' },
+      { id: 'credito', label: 'Crédito', method: 'Cartão de Crédito', tag: 'Até 6x', sub: 'Online ou entrega' },
+      { id: 'debito', label: 'Débito', method: 'Cartão de Débito', tag: 'À vista', sub: 'Online ou entrega' },
+      { id: 'alimentacao', label: 'Alimentação', method: 'Vale-Alimentação', tag: 'VA', sub: 'Alelo, Pluxee, VR' },
+      { id: 'beneficio', label: 'Benefício', method: 'Vale-Benefício', tag: 'Multi', sub: 'Caju, Flash, Swile' },
+      { id: 'dinheiro', label: 'Dinheiro', method: 'Dinheiro', tag: 'Entrega', sub: 'Troco opcional' },
+    ];
+    const CARD_BRANDS = ['Visa', 'Mastercard', 'Elo', 'Hipercard', 'Amex'];
+    const VOUCHER_BRANDS = {
+      alimentacao: ['Alelo', 'Pluxee (Sodexo)', 'Ticket', 'VR', 'Ben Visa Vale'],
+      beneficio: ['Caju', 'Flash', 'Swile', 'iFood Benefícios', 'Alelo Tudo', 'VR Multi'],
+    };
+
     const state = {
       activeTab: 'store',
       activeCat: 'Todas',
       modalDishId: 'MARM-103',
       modalQty: 1,
+      payMethod: 'pix',
+      payMode: 'Online',
+      cardBrand: 'Visa',
+      voucherBrand: { alimentacao: 'Alelo', beneficio: 'Caju' },
+      pix: null,
+      pixSeconds: 900,
+      pixInterval: null,
+      lastReceipt: null,
       marmitas: [
-        { id: 'MARM-101', nome: 'Feijoada Completa Tradicional', cat: 'Tradicional', gosto: 'Caseiro, Bem Temperado', preco: 26.9, tam: '550g', img: '../client/public/images/marmitas/feijoada.jpg', promo: '-19% OFF', disponivel: true },
-        { id: 'MARM-102', nome: 'Frango Grelhado Fitness', cat: 'Fitness & Low Carb', gosto: 'Leve, Rico em Proteína', preco: 23.9, tam: '450g', img: '../client/public/images/marmitas/fitness-frango.jpg', promo: '-14% OFF', disponivel: true },
-        { id: 'MARM-103', nome: 'Salmão ao Molho de Maracujá', cat: 'Gourmet', gosto: 'Agridoce, Sofisticado', preco: 39.9, tam: '480g', img: '../client/public/images/marmitas/salmao-gourmet.jpg', promo: '-15% OFF', disponivel: true },
-        { id: 'MARM-104', nome: 'Bowl Vegano Mediterrâneo', cat: 'Vegetariana & Vegana', gosto: 'Leve, Sem Lactose', preco: 29.9, tam: '480g', img: '../client/public/images/marmitas/bowl-vegano.jpg', promo: '', disponivel: true }
+        { id: 'MARM-101', nome: 'Feijoada Completa Tradicional', cat: 'Tradicional', gosto: 'Caseiro, Bem Temperado', preco: 26.9, tam: '550g', imgFile: 'feijoada.jpg', promo: '-19% OFF', disponivel: true },
+        { id: 'MARM-102', nome: 'Frango Grelhado Fitness', cat: 'Fitness & Low Carb', gosto: 'Leve, Rico em Proteína', preco: 23.9, tam: '450g', imgFile: 'fitness-frango.jpg', promo: '-14% OFF', disponivel: true },
+        { id: 'MARM-103', nome: 'Salmão ao Molho de Maracujá', cat: 'Gourmet', gosto: 'Agridoce, Sofisticado', preco: 39.9, tam: '480g', imgFile: 'salmao-gourmet.jpg', promo: '-15% OFF', disponivel: true },
+        { id: 'MARM-104', nome: 'Bowl Vegano Mediterrâneo', cat: 'Vegetariana & Vegana', gosto: 'Leve, Sem Lactose', preco: 29.9, tam: '480g', imgFile: 'bowl-vegano.jpg', promo: '', disponivel: true },
+        { id: 'MARM-105', nome: 'Strogonoff de Carne com Batata Palha', cat: 'Tradicional', gosto: 'Cremoso, Caseiro', preco: 28.5, tam: '520g', imgFile: 'strogonoff.jpg', promo: '', disponivel: true },
+        { id: 'MARM-106', nome: 'Lasanha Bolonhesa Artesanal', cat: 'Massas', gosto: 'Gratinada, Saborosa', preco: 31.9, tam: '550g', imgFile: 'lasanha.jpg', promo: '', disponivel: true }
       ],
       cart: [{ id: 'MARM-101', nome: 'Feijoada Completa Tradicional', preco: 26.9, qty: 1, obs: '' }],
       pedidos: [
-        { id: 'PED-1001', cliente: 'Mariana Oliveira', tel: '(11) 98765-4321', end: 'Rua Augusta, 1420', pag: 'Pix', resumo: '1x Feijoada Completa Tradicional', total: 26.9, status: 'Em Preparo' }
+        {
+          id: 'PED-1001',
+          cliente: 'Mariana Oliveira',
+          tel: '(11) 98765-4321',
+          end: 'Rua Augusta, 1420',
+          pag: 'Pix',
+          detalhes: { metodo: 'Pix', modo: 'Online', statusPagamento: 'Pago Online (Pix)', txid: 'MS20261001' },
+          resumo: '1x Feijoada Completa Tradicional',
+          total: 26.9,
+          status: 'Em Preparo'
+        }
       ]
     };
 
     const meta = {
       store: { title: 'Tela 1: Cardápio (Visão Cliente)', desc: 'Fundo claro suave (#FFFBF5) facilita a leitura dos pratos; laranja (#EA580C) desperta o apetite; verde (#16A34A) direciona ao botão Comprar.', bullets: ['Clique na foto para abrir a Tela 2 (Detalhes)', 'Clique em Comprar para somar na sacola', 'Alterne Desktop/Celular no topo direito'] },
-      modal: { title: 'Tela 2: Modal Detalhes do Prato', desc: 'Apresenta foto ampliada, porção, tempo de preparo, calorias e campo opcional de observação.', bullets: ['Controle de quantidade (- / +)', 'Campo livre de observações', 'Adiciona direto para o Checkout'] },
-      checkout: { title: 'Tela 3: Sacola & Checkout 1-Passo', desc: 'Sem cadastro obrigatório: revise itens, preencha entrega e confirme em um único fluxo.', bullets: ['Frete Grátis destacado', 'Gera código PED-XXXX na aba Pedidos', 'Confirmação imediata na tela'] },
-      admin: { title: 'Tela 4: Admin — Gerenciar Marmitas', desc: 'Dashboard com KPIs em tempo real e tabela CRUD completa conectada ao Excel.', bullets: ['Clique em + Nova Marmita ou Editar para abrir a Tela 5', 'Alterne Disponível/Pausada com 1 clique', 'Exclusão imediata da planilha'] },
-      adminform: { title: 'Tela 5: Modal Cadastro / Edição', desc: 'Formulário completo para criar novas marmitas ou editar pratos existentes.', bullets: ['Suporta tags de gosto e categoria', 'Define preço base e porção', 'Salva direto na aba Marmitas do Excel'] },
-      orders: { title: 'Tela 6: Admin — Pedidos Recebidos', desc: 'Lista todos os pedidos da aba Pedidos e permite atualizar o status da entrega.', bullets: ['Mostra cliente, telefone, endereço e itens', 'Alteração de status sincronizada com o Excel', 'Reflete novos pedidos feitos na Tela 3'] },
-      excel: { title: 'Tela 7: Planilha Excel (.xlsx)', desc: 'Visualização tabular fiel às abas Marmitas e Pedidos gravadas em server/data/marmitex_social.xlsx.', bullets: ['Atualizada após qualquer compra ou CRUD', 'Compatível com download .xlsx no app', 'Escrita segura com fila writeMutex'] }
+      modal: { title: 'Tela 2: Modal Detalhes do Prato', desc: 'Apresenta foto ampliada, porção, tempo de preparo, calorias e campo opcional de observação.', bullets: ['Controle de quantidade (- / +)', 'Campo livre de observações', 'Adiciona direto para a Sacola'] },
+      checkout: { title: 'Tela 3: Sacola & Dados de Entrega', desc: 'Etapa 1 de 2 do checkout: revise itens, ajuste quantidades e informe nome, WhatsApp e endereço.', bullets: ['Frete Grátis destacado', 'Botão Ir para Pagamento leva à Tela 4', 'Sem cadastro obrigatório'] },
+      payment: { title: 'Tela 4: Pagamento (Pix QR & Cartões)', desc: 'Etapa 2 de 2: escolha Pix QR Code EMV, Cartão de Crédito/Débito, Vale-Alimentação, Vale-Benefício ou Dinheiro.', bullets: ['Pix gera QR Code SVG escaneável + Copia e Cola', 'Crédito/Débito e Vales alternam Online vs Maquininha na Entrega', 'Apenas metadados seguros vão para o Excel'] },
+      admin: { title: 'Tela 5: Admin — Gerenciar Marmitas', desc: 'Dashboard com KPIs em tempo real e tabela CRUD completa conectada ao Excel.', bullets: ['Clique em + Nova Marmita ou Editar para abrir a Tela 6', 'Alterne Disponível/Pausada com 1 clique', 'Exclusão imediata da planilha'] },
+      adminform: { title: 'Tela 6: Modal Cadastro / Edição', desc: 'Formulário completo para criar novas marmitas ou editar pratos existentes.', bullets: ['Suporta tags de gosto e categoria', 'Define preço base e porção', 'Salva direto na aba Marmitas do Excel'] },
+      orders: { title: 'Tela 7: Admin — Pedidos Recebidos', desc: 'Lista pedidos com badge de status do pagamento (Pago Online / Maquininha na Entrega), TXID e troco.', bullets: ['Mostra badge de pagamento + forma detalhada', 'Alteração de status sincronizada com o Excel', 'Reflete novos pedidos finalizados na Tela 4'] },
+      excel: { title: 'Tela 8: Planilha Excel (.xlsx)', desc: 'Visualização tabular fiel às abas Marmitas e Pedidos com a nova coluna pagamentoJson.', bullets: ['Coluna pagamentoJson sem número completo/CVV', 'Compatível com Vercel Blob em produção', 'Atualizada em tempo real no protótipo'] }
     };
 
     const brl = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
@@ -440,6 +722,10 @@
       document.getElementById('side-title').textContent = m.title;
       document.getElementById('side-desc').textContent = m.desc;
       document.getElementById('side-list').innerHTML = m.bullets.map((x) => `<li>${x}</li>`).join('');
+      if (tab === 'payment') {
+        state.lastReceipt = null;
+        ensurePixGenerated();
+      }
       renderAll();
     }
 
@@ -448,7 +734,10 @@
       if (!d) return;
       state.modalDishId = id;
       state.modalQty = 1;
-      document.getElementById('modal-img').src = d.img;
+      const modalImg = document.getElementById('modal-img');
+      modalImg.dataset.retriedVercel = '';
+      modalImg.onerror = () => onDishImgError(modalImg, d.imgFile, d.nome);
+      modalImg.src = getImageUrl(d.imgFile);
       document.getElementById('modal-cat').textContent = `${d.cat} • ${d.gosto}`;
       document.getElementById('modal-name').textContent = d.nome;
       document.getElementById('modal-qty').textContent = 1;
@@ -461,7 +750,16 @@
       const found = state.cart.find((c) => c.id === id && c.obs === obs);
       if (found) found.qty += qty;
       else state.cart.push({ id: dish.id, nome: dish.nome, preco: dish.preco, qty, obs });
-      document.getElementById('order-feedback').classList.add('hidden');
+      state.pix = null;
+      renderAll();
+    }
+
+    function changeCartQty(idx, delta) {
+      const item = state.cart[idx];
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) state.cart.splice(idx, 1);
+      state.pix = null;
       renderAll();
     }
 
@@ -475,21 +773,294 @@
       switchTab('checkout');
     }
 
-    function placeDemoOrder() {
-      if (state.cart.length === 0) return;
-      const nome = document.getElementById('cli-nome').value.trim() || 'Cliente';
-      const tel = document.getElementById('cli-tel').value.trim() || '-';
-      const end = document.getElementById('cli-end').value.trim() || '-';
-      const pag = document.getElementById('cli-pag').value;
-      const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
+    function proceedToPayment() {
+      const errEl = document.getElementById('checkout-err');
+      errEl.classList.add('hidden');
+      if (state.cart.length === 0) {
+        errEl.textContent = 'Adicione pelo menos 1 marmita à sacola antes de pagar.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      const nome = document.getElementById('cli-nome').value.trim();
+      const tel = document.getElementById('cli-tel').value.trim();
+      const end = document.getElementById('cli-end').value.trim();
+      if (!nome || !tel || !end) {
+        errEl.textContent = 'Preencha nome, WhatsApp e endereço de entrega.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      state.pix = null;
+      switchTab('payment');
+    }
+
+    function getCartTotal() {
+      const sum = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
+      return sum > 0 ? sum : 26.9; // fallback demo amount when inspecting payment tab directly
+    }
+
+    function ensurePixGenerated() {
+      const amount = getCartTotal();
+      const nome = document.getElementById('cli-nome').value.trim() || 'Maria Silva';
+      state.pix = generateDemoPix(amount, nome);
+      state.pixSeconds = 15 * 60;
+      if (!state.pixInterval) {
+        state.pixInterval = setInterval(() => {
+          if (state.activeTab === 'payment' && state.payMethod === 'pix' && state.pixSeconds > 0) {
+            state.pixSeconds -= 1;
+            const mins = String(Math.floor(state.pixSeconds / 60)).padStart(2, '0');
+            const secs = String(state.pixSeconds % 60).padStart(2, '0');
+            const badge = document.getElementById('pix-timer-badge');
+            if (badge) badge.textContent = state.pixSeconds > 0 ? `Expira em ${mins}:${secs}` : 'Expirado';
+          }
+        }, 1000);
+      }
+    }
+
+    function selectPayMethod(methodId) {
+      state.payMethod = methodId;
+      document.getElementById('pay-error').classList.add('hidden');
+      if (methodId === 'pix' && !state.pix) ensurePixGenerated();
+      renderPaymentScreen();
+    }
+
+    function setPayMode(mode) {
+      state.payMode = mode;
+      document.getElementById('pay-error').classList.add('hidden');
+      renderPaymentScreen();
+    }
+
+    function selectBrand(brand) {
+      if (state.payMethod === 'alimentacao' || state.payMethod === 'beneficio') {
+        state.voucherBrand[state.payMethod] = brand;
+      } else {
+        state.cardBrand = brand;
+      }
+      renderPaymentScreen();
+    }
+
+    function detectCardBrand(digits) {
+      if (!digits) return '';
+      if (/^(4011|4312|4389|4514|4576|5041|5066|5067|509|6277|6362|6363|650|651|652|655)/.test(digits)) return 'Elo';
+      if (/^(606282|3841)/.test(digits)) return 'Hipercard';
+      if (/^(34|37)/.test(digits)) return 'Amex';
+      if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
+      if (/^4/.test(digits)) return 'Visa';
+      return '';
+    }
+
+    function onCardNumberInput(input) {
+      const digits = input.value.replace(/\D/g, '').slice(0, 19);
+      input.value = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+      const detected = detectCardBrand(digits);
+      if (detected && (state.payMethod === 'credito' || state.payMethod === 'debito')) {
+        state.cardBrand = detected;
+      }
+      updateCardPreview();
+    }
+
+    function onCardExpiryInput(input) {
+      const d = input.value.replace(/\D/g, '').slice(0, 4);
+      input.value = d.length <= 2 ? d : `${d.slice(0, 2)}/${d.slice(2)}`;
+      updateCardPreview();
+    }
+
+    function updateCardPreview() {
+      const num = document.getElementById('card-num').value.trim();
+      const holder = document.getElementById('card-holder').value.trim() || document.getElementById('cli-nome').value.trim() || 'SEU NOME AQUI';
+      const exp = document.getElementById('card-exp').value.trim() || 'MM/AA';
+      const brand = (state.payMethod === 'alimentacao' || state.payMethod === 'beneficio')
+        ? state.voucherBrand[state.payMethod]
+        : (detectCardBrand(num.replace(/\D/g, '')) || state.cardBrand);
+      document.getElementById('preview-number').textContent = num || '•••• •••• •••• ••••';
+      document.getElementById('preview-holder').textContent = holder.toUpperCase();
+      document.getElementById('preview-exp').textContent = exp;
+      document.getElementById('preview-brand').textContent = brand;
+    }
+
+    async function copyPixCode() {
+      if (!state.pix) return;
+      try {
+        await navigator.clipboard.writeText(state.pix.brCode);
+      } catch {
+        const el = document.getElementById('pix-brcode-input');
+        el.select();
+        document.execCommand('copy');
+      }
+      const btn = document.getElementById('pix-copy-btn');
+      btn.textContent = 'Copiado!';
+      btn.style.background = '#16A34A';
+      setTimeout(() => {
+        btn.textContent = 'Copiar';
+        btn.style.background = '';
+      }, 2200);
+    }
+
+    function confirmDemoPayment() {
+      const errEl = document.getElementById('pay-error');
+      errEl.classList.add('hidden');
+      const amount = getCartTotal();
+      if (state.cart.length === 0) {
+        addCart('MARM-101');
+      }
+      const nome = document.getElementById('cli-nome').value.trim() || 'Maria Silva';
+      const tel = document.getElementById('cli-tel').value.trim() || '(11) 98888-7777';
+      const end = document.getElementById('cli-end').value.trim() || 'Rua das Flores, 120';
+
+      let formaPagamento = 'Pix';
+      let detalhes = null;
+
+      if (state.payMethod === 'pix') {
+        if (!state.pix) ensurePixGenerated();
+        detalhes = { metodo: 'Pix', modo: 'Online', statusPagamento: 'Pago Online (Pix)', txid: state.pix.txid };
+      } else if (state.payMethod === 'dinheiro') {
+        const troco = document.getElementById('cash-troco').value.trim();
+        formaPagamento = troco ? `Dinheiro (Troco para ${troco})` : 'Dinheiro (Sem troco)';
+        detalhes = { metodo: 'Dinheiro', modo: 'Entrega', statusPagamento: 'Pagar na Entrega', ...(troco ? { trocoPara: troco } : {}) };
+      } else {
+        const isVoucher = state.payMethod === 'alimentacao' || state.payMethod === 'beneficio';
+        const methodLabel = PAY_METHODS.find((m) => m.id === state.payMethod).method;
+        const brand = isVoucher
+          ? state.voucherBrand[state.payMethod]
+          : (detectCardBrand(document.getElementById('card-num').value.replace(/\D/g, '')) || state.cardBrand);
+
+        if (state.payMode === 'Online') {
+          const digits = document.getElementById('card-num').value.replace(/\D/g, '');
+          const holder = document.getElementById('card-holder').value.trim();
+          const exp = document.getElementById('card-exp').value.trim();
+          const cvv = document.getElementById('card-cvv').value.replace(/\D/g, '');
+          if (digits.length < 13) {
+            errEl.textContent = 'Para simular Pagamento Online, informe ao menos 13 dígitos no número do cartão (ou mude para Na Entrega).';
+            errEl.classList.remove('hidden');
+            return;
+          }
+          if (holder.length < 3 || !/^\d{2}\/\d{2}$/.test(exp) || cvv.length < 3) {
+            errEl.textContent = 'Preencha titular, validade (MM/AA) e CVV (3–4 dígitos).';
+            errEl.classList.remove('hidden');
+            return;
+          }
+          const last4 = digits.slice(-4);
+          const parcelas = state.payMethod === 'credito' ? Number(document.getElementById('card-installments').value || 1) : 1;
+          formaPagamento = state.payMethod === 'credito'
+            ? `${methodLabel} (${brand} ${parcelas}x • Final ${last4})`
+            : `${methodLabel} (${brand} • Final ${last4})`;
+          detalhes = {
+            metodo: methodLabel,
+            modo: 'Online',
+            statusPagamento: 'Pago Online',
+            bandeira: brand,
+            ...(state.payMethod === 'credito' || state.payMethod === 'debito' ? { parcelas } : {}),
+            ultimosDigitos: last4,
+          };
+        } else {
+          formaPagamento = `${methodLabel} (${brand} • Maquininha na Entrega)`;
+          detalhes = { metodo: methodLabel, modo: 'Entrega', statusPagamento: 'Pagar na Entrega', bandeira: brand };
+        }
+      }
+
       const resumo = state.cart.map((i) => `${i.qty}x ${i.nome}`).join(', ');
+      const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
       const newId = `PED-${1001 + state.pedidos.length}`;
-      state.pedidos.unshift({ id: newId, cliente: nome, tel, end, pag, resumo, total, status: 'Recebido' });
+      const created = { id: newId, cliente: nome, tel, end, pag: formaPagamento, detalhes, resumo, total, status: 'Recebido' };
+      state.pedidos.unshift(created);
       state.cart = [];
-      const fb = document.getElementById('order-feedback');
-      fb.textContent = `✓ Pedido ${newId} gravado na aba Pedidos da planilha Excel!`;
-      fb.classList.remove('hidden');
+      state.lastReceipt = created;
       renderAll();
+    }
+
+    function renderPaymentScreen() {
+      const receiptEl = document.getElementById('pay-receipt-view');
+      const flowEl = document.getElementById('pay-flow-view');
+
+      if (state.lastReceipt) {
+        const r = state.lastReceipt;
+        const paid = r.detalhes && (r.detalhes.modo === 'Online' || String(r.detalhes.statusPagamento).toLowerCase().includes('pago'));
+        receiptEl.innerHTML = `
+          <span class="badge ${paid ? 'badge-green' : 'badge-amber'}">${r.detalhes ? r.detalhes.statusPagamento : 'Confirmado'}</span>
+          <h2 style="margin-top:8px;">Pedido ${r.id} Confirmado!</h2>
+          <p class="muted">Registrado na aba <code>Pedidos</code> da planilha Excel.</p>
+          <div class="flow-box" style="text-align:left;background:#FFFBF5;">
+            <div><strong>Itens:</strong> ${r.resumo}</div>
+            <div style="margin-top:4px;"><strong>Pagamento:</strong> ${r.pag}</div>
+            ${r.detalhes && r.detalhes.txid ? `<div style="margin-top:4px;font-family:Consolas,monospace;"><strong>TXID Pix:</strong> ${r.detalhes.txid}</div>` : ''}
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+              <span>${paid ? 'Total Pago' : 'Total na Entrega'}</span>
+              <strong style="color:var(--green);font-size:16px;">${brl(r.total)}</strong>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px;">
+            <button class="btn btn-dark" onclick="switchTab('orders')">Ver na Aba Pedidos (Admin)</button>
+            <button class="btn btn-orange" onclick="switchTab('excel')">Ver na Planilha Excel</button>
+            <button class="btn btn-soft" onclick="state.lastReceipt=null;switchTab('store')">Novo Pedido</button>
+          </div>
+        `;
+        receiptEl.classList.remove('hidden');
+        flowEl.classList.add('hidden');
+        return;
+      }
+
+      receiptEl.classList.add('hidden');
+      flowEl.classList.remove('hidden');
+
+      const amount = getCartTotal();
+      document.getElementById('pay-amount-label').textContent = brl(amount);
+
+      document.getElementById('pay-method-grid').innerHTML = PAY_METHODS.map((m) => `
+        <button type="button" class="pay-method-btn ${state.payMethod === m.id ? 'active' : ''}" onclick="selectPayMethod('${m.id}')">
+          <span class="pay-tag">${m.tag}</span>
+          <strong style="font-size:13px;">${m.label}</strong>
+          <span class="muted" style="font-size:10px;">${m.sub}</span>
+        </button>
+      `).join('');
+
+      document.getElementById('pay-panel-pix').classList.toggle('hidden', state.payMethod !== 'pix');
+      document.getElementById('pay-panel-cash').classList.toggle('hidden', state.payMethod !== 'dinheiro');
+      const isCardOrVoucher = ['credito', 'debito', 'alimentacao', 'beneficio'].includes(state.payMethod);
+      document.getElementById('pay-panel-card').classList.toggle('hidden', !isCardOrVoucher);
+
+      if (state.payMethod === 'pix') {
+        if (!state.pix) ensurePixGenerated();
+        document.getElementById('pix-qr-svg').innerHTML = window.renderPixQrSvg(state.pix.brCode);
+        document.getElementById('pix-txid').textContent = state.pix.txid;
+        document.getElementById('pix-brcode-input').value = state.pix.brCode;
+        document.getElementById('confirm-pay-btn').textContent = `Já fiz o Pix • Confirmar (${brl(amount)})`;
+      } else if (state.payMethod === 'dinheiro') {
+        const opts = ['Sem troco', ...[50, 100, 200].filter((v) => v >= amount).map((v) => `R$ ${v},00`)];
+        const currentTroco = document.getElementById('cash-troco').value.trim();
+        document.getElementById('cash-chips').innerHTML = opts.map((opt) => {
+          const val = opt === 'Sem troco' ? '' : opt;
+          return `<button type="button" class="brand-chip ${currentTroco === val ? 'active' : ''}" onclick="document.getElementById('cash-troco').value='${val}';renderPaymentScreen();">${opt}</button>`;
+        }).join('');
+        document.getElementById('confirm-pay-btn').textContent = `Confirmar Pedido (${brl(amount)})`;
+      } else {
+        document.getElementById('mode-online-btn').classList.toggle('active', state.payMode === 'Online');
+        document.getElementById('mode-entrega-btn').classList.toggle('active', state.payMode === 'Entrega');
+        document.getElementById('card-online-fields').classList.toggle('hidden', state.payMode !== 'Online');
+        document.getElementById('card-entrega-info').classList.toggle('hidden', state.payMode !== 'Entrega');
+
+        const isVoucher = state.payMethod === 'alimentacao' || state.payMethod === 'beneficio';
+        const showBrandPicker = isVoucher || state.payMode === 'Entrega';
+        document.getElementById('brand-picker-wrap').classList.toggle('hidden', !showBrandPicker);
+
+        const brands = isVoucher ? VOUCHER_BRANDS[state.payMethod] : CARD_BRANDS;
+        const activeBrand = isVoucher ? state.voucherBrand[state.payMethod] : state.cardBrand;
+        document.getElementById('brand-picker-label').textContent = isVoucher
+          ? `Bandeira do ${state.payMethod === 'alimentacao' ? 'Vale-Alimentação' : 'Vale-Benefício'}:`
+          : 'Bandeira do cartão para a maquininha:';
+        document.getElementById('brand-chips').innerHTML = brands.map((b) => `
+          <button type="button" class="brand-chip ${activeBrand === b ? 'active' : ''}" onclick="selectBrand('${b}')">${b}</button>
+        `).join('');
+
+        document.getElementById('preview-type').textContent = PAY_METHODS.find((m) => m.id === state.payMethod).method;
+        document.getElementById('installments-wrap').classList.toggle('hidden', state.payMethod !== 'credito');
+        document.getElementById('card-installments').innerHTML = [1, 2, 3, 4, 5, 6].map((n) => `
+          <option value="${n}">${n}x de ${brl(amount / n)} sem juros${n === 1 ? ' (à vista)' : ''}</option>
+        `).join('');
+        document.getElementById('entrega-brand-msg').innerHTML = `Levaremos a maquininha compatível com <strong>${activeBrand}</strong> para pagamento na entrega.`;
+        updateCardPreview();
+        document.getElementById('confirm-pay-btn').textContent = state.payMode === 'Online'
+          ? `Pagar ${brl(amount)} e Confirmar`
+          : `Confirmar Pedido (${brl(amount)})`;
+      }
     }
 
     function openNewMarmitaForm() {
@@ -532,7 +1103,7 @@
         state.marmitas.unshift({
           id: `MARM-${101 + state.marmitas.length}`,
           nome, cat, gosto, preco, tam,
-          img: '../client/public/images/marmitas/strogonoff.jpg',
+          imgFile: 'strogonoff.jpg',
           promo: '',
           disponivel: true
         });
@@ -558,6 +1129,17 @@
     }
 
     function renderAll() {
+      // Hide download exe link if already opened directly from disk/exe
+      const exeBtn = document.getElementById('download-exe-btn');
+      if (exeBtn) exeBtn.classList.toggle('hidden', window.location.protocol === 'file:');
+
+      const heroImg = document.getElementById('hero-dish-img');
+      if (heroImg && !heroImg.dataset.init) {
+        heroImg.dataset.init = '1';
+        heroImg.onerror = () => onDishImgError(heroImg, 'feijoada.jpg', 'Feijoada Completa');
+        heroImg.src = getImageUrl('feijoada.jpg');
+      }
+
       const count = state.cart.reduce((s, i) => s + i.qty, 0);
       const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
       document.getElementById('top-cart-btn').textContent = count > 0 ? `Sacola (${count}) • ${brl(total)}` : 'Sacola (0)';
@@ -565,7 +1147,7 @@
       document.getElementById('floating-text').textContent = `${count} ${count === 1 ? 'item' : 'itens'} • Finalizar Pedido Agora`;
       document.getElementById('floating-total').textContent = `${brl(total)} →`;
 
-      const cats = ['Todas', 'Tradicional', 'Fitness & Low Carb', 'Vegetariana & Vegana', 'Gourmet'];
+      const cats = ['Todas', 'Tradicional', 'Fitness & Low Carb', 'Vegetariana & Vegana', 'Gourmet', 'Massas'];
       document.getElementById('cat-pills').innerHTML = cats
         .map((c) => `<button class="pill ${state.activeCat === c ? 'active' : ''}" onclick="state.activeCat='${c}';renderAll();">${c}</button>`)
         .join('');
@@ -574,7 +1156,7 @@
       document.getElementById('store-grid').innerHTML = visible.map((m) => `
         <div class="dish-card">
           <div class="dish-photo" onclick="openDishModal('${m.id}')">
-            <img src="${m.img}" onerror="this.style.display='none'" alt="${m.nome}" />
+            <img src="${getImageUrl(m.imgFile)}" onerror="onDishImgError(this, '${m.imgFile}', '${m.nome.replace(/'/g, '')}')" alt="${m.nome}" />
             ${m.promo ? `<span class="promo-tag">${m.promo}</span>` : ''}
             <span class="size-tag">${m.tam || '500g'}</span>
           </div>
@@ -594,13 +1176,24 @@
 
       document.getElementById('checkout-items').innerHTML = state.cart.length === 0
         ? '<p class="muted">Sacola vazia. Adicione pratos na Tela 1.</p>'
-        : state.cart.map((c) => `
-          <div class="flow-box" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;">
-            <div><strong>${c.qty}x ${c.nome}</strong>${c.obs ? `<div class="muted">Obs: ${c.obs}</div>` : ''}</div>
-            <strong>${brl(c.preco * c.qty)}</strong>
+        : state.cart.map((c, idx) => `
+          <div class="flow-box" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <div>
+              <strong>${c.qty}x ${c.nome}</strong>
+              ${c.obs ? `<div class="muted">Obs: ${c.obs}</div>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="btn btn-soft" style="padding:3px 8px;" onclick="changeCartQty(${idx}, -1)">-</button>
+              <button class="btn btn-soft" style="padding:3px 8px;" onclick="changeCartQty(${idx}, 1)">+</button>
+              <strong>${brl(c.preco * c.qty)}</strong>
+            </div>
           </div>
         `).join('');
       document.getElementById('checkout-total').textContent = brl(total);
+
+      if (state.activeTab === 'payment') {
+        renderPaymentScreen();
+      }
 
       document.getElementById('kpi-total').textContent = state.marmitas.length;
       document.getElementById('kpi-active').textContent = state.marmitas.filter((m) => m.disponivel).length;
@@ -621,30 +1214,35 @@
         </tr>
       `).join('');
 
-      document.getElementById('orders-list').innerHTML = state.pedidos.map((p) => `
-        <div class="card" style="padding:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <div>
-              <span class="badge">${p.id}</span>
-              <strong style="margin-left:6px;">${p.cliente}</strong>
-              <div class="muted" style="font-size:12px;margin-top:4px;">${p.resumo} • ${p.end} (${p.pag})</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <strong style="color:var(--green);">${brl(p.total)}</strong>
-              <select style="width:auto;" onchange="updateOrderStatus('${p.id}', this.value)">
-                ${['Recebido','Em Preparo','Saiu para Entrega','Entregue','Cancelado'].map((st) => `<option ${p.status===st?'selected':''}>${st}</option>`).join('')}
-              </select>
+      document.getElementById('orders-list').innerHTML = state.pedidos.map((p) => {
+        const isPaid = p.detalhes && (p.detalhes.modo === 'Online' || String(p.detalhes.statusPagamento).toLowerCase().includes('pago'));
+        return `
+          <div class="card" style="padding:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+              <div>
+                <span class="badge">${p.id}</span>
+                ${p.detalhes ? `<span class="badge ${isPaid ? 'badge-green' : 'badge-amber'}" style="margin-left:4px;">${p.detalhes.statusPagamento}</span>` : ''}
+                <strong style="margin-left:6px;">${p.cliente}</strong>
+                <div class="muted" style="font-size:12px;margin-top:4px;">${p.resumo} • ${p.end}</div>
+                <div class="muted" style="font-size:11px;margin-top:2px;">Pagamento: <strong>${p.pag}</strong>${p.detalhes && p.detalhes.txid ? ` • TXID: ${p.detalhes.txid}` : ''}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <strong style="color:var(--green);">${brl(p.total)}</strong>
+                <select style="width:auto;" onchange="updateOrderStatus('${p.id}', this.value)">
+                  ${['Recebido','Em Preparo','Saiu para Entrega','Entregue','Cancelado'].map((st) => `<option ${p.status===st?'selected':''}>${st}</option>`).join('')}
+                </select>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       document.getElementById('excel-marmitas').innerHTML = state.marmitas.map((m) => `
         <tr><td>${m.id}</td><td>${m.nome}</td><td>${m.cat}</td><td>${m.gosto}</td><td>${m.preco.toFixed(2)}</td><td>${m.disponivel ? 'VERDADEIRO' : 'FALSO'}</td></tr>
       `).join('');
 
       document.getElementById('excel-pedidos').innerHTML = state.pedidos.map((p) => `
-        <tr><td>${p.id}</td><td>${p.cliente}</td><td>${p.resumo}</td><td>${p.total.toFixed(2)}</td><td>${p.status}</td></tr>
+        <tr><td>${p.id}</td><td>${p.cliente}</td><td>${p.pag}</td><td style="font-family:Consolas,monospace;font-size:10px;max-width:240px;word-break:break-all;">${p.detalhes ? JSON.stringify(p.detalhes) : ''}</td><td>${p.total.toFixed(2)}</td><td>${p.status}</td></tr>
       `).join('');
     }
 
