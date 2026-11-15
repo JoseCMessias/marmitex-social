@@ -18,11 +18,24 @@ Todos os três pontos já foram corrigidos:
 
 ---
 
-## Aviso Importante Sobre Planilha Excel na Vercel
+## Persistência da Planilha Excel na Vercel (Vercel Blob) & Limpeza a cada 10 Minutos
 
-> **Atenção:** A Vercel executa funções **Serverless** sem disco persistente. O diretório `/tmp` usado em `process.env.VERCEL` permite que a API funcione sem erro `500`, porém **os dados gravados em `/tmp/marmitex_social.xlsx` são temporários** e voltam ao cardápio inicial sempre que a função hiberna (cold start) ou escala entre instâncias.
+> **Importante:** A Vercel executa funções **Serverless** sem disco local persistente. Sem configurar o **Vercel Blob**, a API usa `/tmp/marmitex_social.xlsx`, que é efêmero por instância e apaga os pratos inseridos ao dar refresh ou ocorrer cold start.
 >
-> Para **persistência permanente** da planilha `.xlsx` em produção, recomenda-se hospedar apenas a pasta `server/` em uma plataforma Node com disco persistente (ex.: **Render**, **Railway**, **Fly.io** ou VPS) ou migrar o armazenamento da planilha para **Vercel Blob / S3 / Banco de Dados**. O frontend (`client/`) pode ficar na Vercel normalmente.
+> Agora a API suporta **persistência real do arquivo `.xlsx` no Vercel Blob** automaticamente assim que a variável `BLOB_READ_WRITE_TOKEN` está configurada no projeto da API.
+
+### Como ativar o Vercel Blob no projeto da API (`server-d27r`)
+
+1. No painel da Vercel, abra o projeto da API (`server-d27r`).
+2. Vá em **Storage → Create Database → Blob**, crie uma store (Public ou Private) e clique em **Connect Project** conectando ao projeto da API.
+3. Faça um **Redeploy** (ou dê push no repositório). A partir daí, `/api/health` e o Painel Admin mostrarão `Vercel Blob (.xlsx persistente)` e todos os pratos/pedidos adicionados ficarão salvos na planilha mesmo após atualizar a página.
+
+### Limpeza automática dos pratos inseridos (10 minutos)
+
+- Os 8 pratos originais do catálogo (`MARM-101` a `MARM-108`) permanecem fixos na planilha.
+- Todo prato inserido manualmente (`MARM-109+`) permanece na planilha por **10 minutos** (`criadoEm`) e depois é removido automaticamente pela função `cleanupInsertedMarmitas`:
+  - **Localmente:** um agendador (`setInterval` a cada 10 minutos) executa a limpeza ativa em segundo plano.
+  - **Na Vercel (plano Hobby):** a limpeza ocorre automaticamente a cada requisição após os 10 minutos, e também há o endpoint `GET/POST /api/marmitas/cleanup` (além de `/api/cron/cleanup` e do botão **"Limpar Inseridos Agora"** no painel Admin).
 
 ---
 

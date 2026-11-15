@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { get as blobGet, put as blobPut } from '@vercel/blob';
 import ExcelJS from 'exceljs';
 import { INITIAL_MARMITAS, INITIAL_PEDIDOS } from '../seed/initialMarmitas.js';
 
@@ -9,16 +10,133 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const DEFAULT_DB_PATH = path.resolve(__dirname, '../../data/marmitex_social.xlsx');
+export const DEFAULT_INSERTED_DISH_TTL_MS = 10 * 60 * 1000;
+const BLOB_WORKBOOK_PATHNAME = process.env.EXCEL_BLOB_PATHNAME || 'db/marmitex_social.xlsx';
+const XLSX_MIME =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+export const INITIAL_MARMITA_IDS = new Set(INITIAL_MARMITAS.map((item) => item.id));
+const SEEDED_MAX_MARMITA_NUM = Math.max(
+  100,
+  ...INITIAL_MARMITAS.map((item) => {
+    const match = String(item.id).match(/^MARM-(\d+)$/i);
+    return match ? Number(match[1]) : 100;
+  })
+);
+
+let cachedBlobAccess =
+  process.env.BLOB_ACCESS === 'public' || process.env.BLOB_ACCESS === 'private'
+    ? process.env.BLOB_ACCESS
+    : null;
+
+export function getInsertedDishTtlMs() {
+  const configured = Number(process.env.INSERTED_MARMITA_TTL_MS);
+  if (Number.isFinite(configured) && configured >= 0) {
+    return configured;
+  }
+  return DEFAULT_INSERTED_DISH_TTL_MS;
+}
+
+export function isBlobStorageEnabled() {
+  if (process.env.EXCEL_DB_PATH) return false;
+  return Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN ||
+      (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN)
+  );
+}
+
+export function getPersistenceInfo() {
+  if (isBlobStorageEnabled()) {
+    return {
+      mode: 'vercel-blob',
+      persistent: true,
+      label: 'Vercel Blob (.xlsx persistente)',
+    };
+  }
+  if (process.env.VERCEL) {
+    return {
+      mode: 'vercel-tmp-ephemeral',
+      persistent: false,
+      label: 'Vercel /tmp temporário (conecte Vercel Blob / BLOB_READ_WRITE_TOKEN)',
+    };
+  }
+  return {
+    mode: 'local-file',
+    persistent: true,
+    label: 'Arquivo Excel local (.xlsx)',
+  };
+}
 
 export function getDbPath() {
   if (process.env.EXCEL_DB_PATH) {
     return path.resolve(process.env.EXCEL_DB_PATH);
   }
-  // Vercel serverless filesystem (/var/task) is read-only; /tmp is writable while warm.
+  if (isBlobStorageEnabled()) {
+    return `vercel-blob://${BLOB_WORKBOOK_PATHNAME}`;
+  }
+  // Vercel serverless filesystem (/var/task) is read-only; /tmp is writable only per instance.
   if (process.env.VERCEL) {
     return path.join(os.tmpdir(), 'marmitex_social.xlsx');
   }
   return DEFAULT_DB_PATH;
+}
+
+function isAccessMismatchError(err) {
+  const msg = String(err?.message || '').toLowerCase();
+  return (
+    err?.name === 'BlobAccessError' ||
+    msg.includes('public store') ||
+    msg.includes('private store') ||
+    msg.includes('access must be') ||
+    (msg.includes('access') && (msg.includes('public') || msg.includes('private')))
+  );
+}
+
+async function withDetectedBlobAccess(operation) {
+  const candidates = cachedBlobAccess ? [cachedBlobAccess] : ['private', 'public'];
+  let lastError;
+
+  for (const access of candidates) {
+    try {
+      const result = await operation(access);
+      cachedBlobAccess = access;
+      return { result, access };
+    } catch (err) {
+      lastError = err;
+      if (!cachedBlobAccess && isAccessMismatchError(err)) {
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError;
+}
+
+export async function readBlobBuffer(pathname) {
+  const { result } = await withDetectedBlobAccess((access) =>
+    blobGet(pathname, { access, useCache: false })
+  );
+  if (!result || !result.stream) return null;
+
+  const arrayBuf = await new Response(result.stream).arrayBuffer();
+  return {
+    buffer: Buffer.from(arrayBuf),
+    blob: result.blob,
+  };
+}
+
+export async function writeBlobBuffer(pathname, buffer, contentType, cacheControlMaxAge = 60) {
+  const { result, access } = await withDetectedBlobAccess((resolvedAccess) =>
+    blobPut(pathname, buffer, {
+      access: resolvedAccess,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge,
+      contentType,
+    })
+  );
+  return { blob: result, access };
 }
 
 const MARMITAS_COLUMNS = [
@@ -178,10 +296,7 @@ function styleWorksheet(worksheet, columns, currencyKeys = []) {
   }
 }
 
-async function writeDatabase(marmitas, pedidos) {
-  const dbPath = getDbPath();
-  await fs.mkdir(path.dirname(dbPath), { recursive: true });
-
+async function buildWorkbookBuffer(marmitas, pedidos) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'MarmitexSocial';
   workbook.created = new Date();
@@ -215,8 +330,50 @@ async function writeDatabase(marmitas, pedidos) {
   }
   styleWorksheet(pedidosSheet, PEDIDOS_COLUMNS, ['total']);
 
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+async function readStoredWorkbook() {
+  if (isBlobStorageEnabled()) {
+    const res = await readBlobBuffer(BLOB_WORKBOOK_PATHNAME);
+    if (!res) return null;
+    return {
+      buffer: res.buffer,
+      sizeBytes: res.buffer.byteLength,
+      updatedAt:
+        res.blob?.uploadedAt instanceof Date
+          ? res.blob.uploadedAt.toISOString()
+          : new Date().toISOString(),
+    };
+  }
+
+  const dbPath = getDbPath();
+  try {
+    const [buffer, stats] = await Promise.all([fs.readFile(dbPath), fs.stat(dbPath)]);
+    return {
+      buffer,
+      sizeBytes: stats.size,
+      updatedAt: stats.mtime.toISOString(),
+    };
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+async function writeDatabase(marmitas, pedidos) {
+  const buffer = await buildWorkbookBuffer(marmitas, pedidos);
+
+  if (isBlobStorageEnabled()) {
+    await writeBlobBuffer(BLOB_WORKBOOK_PATHNAME, buffer, XLSX_MIME, 60);
+    return;
+  }
+
+  const dbPath = getDbPath();
+  await fs.mkdir(path.dirname(dbPath), { recursive: true });
   const tempPath = `${dbPath}.${Date.now()}.tmp.xlsx`;
-  await workbook.xlsx.writeFile(tempPath);
+  await fs.writeFile(tempPath, buffer);
   try {
     await fs.rename(tempPath, dbPath);
   } catch (err) {
@@ -275,40 +432,83 @@ function hydratePedido(raw) {
   };
 }
 
-export async function ensureDatabase() {
-  const dbPath = getDbPath();
-  try {
-    await fs.access(dbPath);
-    return;
-  } catch {
-    // Database does not exist yet; create and seed atomically.
+export function isInsertedMarmita(item) {
+  return Boolean(item && item.id && !INITIAL_MARMITA_IDS.has(item.id));
+}
+
+export function serializeMarmita(item) {
+  const temporario = isInsertedMarmita(item);
+  const createdMs = Date.parse(item.criadoEm);
+  const expiraEm =
+    temporario && Number.isFinite(createdMs)
+      ? new Date(createdMs + getInsertedDishTtlMs()).toISOString()
+      : null;
+  return {
+    ...item,
+    temporario,
+    expiraEm,
+  };
+}
+
+export function getExpiredInsertedMarmitas(
+  marmitas,
+  { maxAgeMs = getInsertedDishTtlMs(), now = Date.now(), force = false } = {}
+) {
+  const activeMarmitas = [];
+  const removedMarmitas = [];
+
+  for (const item of marmitas) {
+    if (!isInsertedMarmita(item)) {
+      activeMarmitas.push(item);
+      continue;
+    }
+    if (force) {
+      removedMarmitas.push(item);
+      continue;
+    }
+    const createdAtMs = Date.parse(item.criadoEm);
+    const elapsedMs = Number.isFinite(createdAtMs) ? now - createdAtMs : Infinity;
+    if (elapsedMs >= maxAgeMs) {
+      removedMarmitas.push(item);
+    } else {
+      activeMarmitas.push(item);
+    }
   }
 
+  return { activeMarmitas, removedMarmitas };
+}
+
+async function ensureDatabaseUnsafe() {
+  const existing = await readStoredWorkbook();
+  if (existing) return existing;
+
+  const now = new Date().toISOString();
+  const seededMarmitas = INITIAL_MARMITAS.map((item) => ({
+    ...item,
+    criadoEm: now,
+    atualizadoEm: now,
+  }));
+  const seededPedidos = INITIAL_PEDIDOS.map((order) => ({
+    ...order,
+    criadoEm: now,
+  }));
+  await writeDatabase(seededMarmitas, seededPedidos);
+  return readStoredWorkbook();
+}
+
+export async function ensureDatabase() {
+  const existing = await readStoredWorkbook();
+  if (existing) return;
+
   await withWriteLock(async () => {
-    try {
-      await fs.access(dbPath);
-      return;
-    } catch {
-      const now = new Date().toISOString();
-      const seededMarmitas = INITIAL_MARMITAS.map((item) => ({
-        ...item,
-        criadoEm: now,
-        atualizadoEm: now,
-      }));
-      const seededPedidos = INITIAL_PEDIDOS.map((order) => ({
-        ...order,
-        criadoEm: now,
-      }));
-      await writeDatabase(seededMarmitas, seededPedidos);
-    }
+    await ensureDatabaseUnsafe();
   });
 }
 
-async function loadWorkbookData() {
-  await ensureDatabase();
-  const dbPath = getDbPath();
+async function readWorkbookUnsafe() {
+  const stored = await ensureDatabaseUnsafe();
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(dbPath);
+  await workbook.xlsx.load(stored.buffer);
 
   const marmitasSheet = workbook.getWorksheet('Marmitas');
   const pedidosSheet = workbook.getWorksheet('Pedidos');
@@ -316,11 +516,24 @@ async function loadWorkbookData() {
   const marmitas = readSheetObjects(marmitasSheet, MARMITAS_COLUMNS).map(hydrateMarmita);
   const pedidos = readSheetObjects(pedidosSheet, PEDIDOS_COLUMNS).map(hydratePedido);
 
-  return { marmitas, pedidos };
+  return { marmitas, pedidos, stored };
+}
+
+async function loadWorkbookData() {
+  await ensureDatabase();
+  const data = await readWorkbookUnsafe();
+  const { removedMarmitas } = getExpiredInsertedMarmitas(data.marmitas);
+
+  if (removedMarmitas.length > 0) {
+    await cleanupInsertedMarmitas();
+    return readWorkbookUnsafe();
+  }
+
+  return data;
 }
 
 function generateNextId(prefix, existingItems) {
-  let maxNumber = prefix === 'MARM' ? 100 : 1000;
+  let maxNumber = prefix === 'MARM' ? SEEDED_MAX_MARMITA_NUM : 1000;
   for (const item of existingItems) {
     const match = String(item.id).match(new RegExp(`^${prefix}-(\\d+)$`, 'i'));
     if (match) {
@@ -329,6 +542,61 @@ function generateNextId(prefix, existingItems) {
     }
   }
   return `${prefix}-${maxNumber + 1}`;
+}
+
+export async function cleanupInsertedMarmitas({
+  maxAgeMs = getInsertedDishTtlMs(),
+  now = Date.now(),
+  force = false,
+} = {}) {
+  return withWriteLock(async () => {
+    const { marmitas, pedidos } = await readWorkbookUnsafe();
+    const { activeMarmitas, removedMarmitas } = getExpiredInsertedMarmitas(marmitas, {
+      maxAgeMs,
+      now,
+      force,
+    });
+
+    if (removedMarmitas.length === 0) {
+      return {
+        deletedCount: 0,
+        deletedIds: [],
+        remainingCount: marmitas.length,
+        ttlMinutes: Math.round(maxAgeMs / 60000),
+      };
+    }
+
+    await writeDatabase(activeMarmitas, pedidos);
+    return {
+      deletedCount: removedMarmitas.length,
+      deletedIds: removedMarmitas.map((item) => item.id),
+      remainingCount: activeMarmitas.length,
+      ttlMinutes: Math.round(maxAgeMs / 60000),
+    };
+  });
+}
+
+export function startInsertedDishCleanupScheduler(
+  intervalMs = getInsertedDishTtlMs(),
+  onCleaned = null
+) {
+  const safeInterval = Math.max(1000, Number(intervalMs) || DEFAULT_INSERTED_DISH_TTL_MS);
+  const timer = setInterval(async () => {
+    try {
+      const result = await cleanupInsertedMarmitas();
+      if (result.deletedCount > 0 && typeof onCleaned === 'function') {
+        onCleaned(result);
+      }
+    } catch (err) {
+      console.error('[Cleanup Scheduler Error]', err);
+    }
+  }, safeInterval);
+
+  if (typeof timer.unref === 'function') {
+    timer.unref();
+  }
+
+  return () => clearInterval(timer);
 }
 
 export async function listMarmitas() {
@@ -343,15 +611,16 @@ export async function getMarmitaById(id) {
 
 export async function createMarmita(payload) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await loadWorkbookData();
+    const { marmitas, pedidos } = await readWorkbookUnsafe();
+    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
     const now = new Date().toISOString();
     const newItem = hydrateMarmita({
       ...payload,
-      id: generateNextId('MARM', marmitas),
+      id: generateNextId('MARM', activeMarmitas),
       criadoEm: now,
       atualizadoEm: now,
     });
-    const updated = [newItem, ...marmitas];
+    const updated = [newItem, ...activeMarmitas];
     await writeDatabase(updated, pedidos);
     return newItem;
   });
@@ -359,11 +628,12 @@ export async function createMarmita(payload) {
 
 export async function updateMarmita(id, payload) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await loadWorkbookData();
-    const index = marmitas.findIndex((item) => item.id === id);
+    const { marmitas, pedidos } = await readWorkbookUnsafe();
+    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
+    const index = activeMarmitas.findIndex((item) => item.id === id);
     if (index === -1) return null;
 
-    const existing = marmitas[index];
+    const existing = activeMarmitas[index];
     const updatedItem = hydrateMarmita({
       ...existing,
       ...payload,
@@ -372,7 +642,7 @@ export async function updateMarmita(id, payload) {
       atualizadoEm: new Date().toISOString(),
     });
 
-    const nextMarmitas = [...marmitas];
+    const nextMarmitas = [...activeMarmitas];
     nextMarmitas[index] = updatedItem;
     await writeDatabase(nextMarmitas, pedidos);
     return updatedItem;
@@ -381,11 +651,17 @@ export async function updateMarmita(id, payload) {
 
 export async function deleteMarmita(id) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await loadWorkbookData();
-    const exists = marmitas.some((item) => item.id === id);
-    if (!exists) return false;
+    const { marmitas, pedidos } = await readWorkbookUnsafe();
+    const { activeMarmitas, removedMarmitas } = getExpiredInsertedMarmitas(marmitas);
+    const exists = activeMarmitas.some((item) => item.id === id);
+    if (!exists) {
+      if (removedMarmitas.length > 0) {
+        await writeDatabase(activeMarmitas, pedidos);
+      }
+      return false;
+    }
 
-    const nextMarmitas = marmitas.filter((item) => item.id !== id);
+    const nextMarmitas = activeMarmitas.filter((item) => item.id !== id);
     await writeDatabase(nextMarmitas, pedidos);
     return true;
   });
@@ -398,14 +674,15 @@ export async function listPedidos() {
 
 export async function createPedido(payload) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await loadWorkbookData();
+    const { marmitas, pedidos } = await readWorkbookUnsafe();
+    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
     const now = new Date().toISOString();
 
     const itemsWithDetails = [];
     let total = 0;
 
     for (const cartItem of payload.itens) {
-      const dish = marmitas.find((m) => m.id === cartItem.id);
+      const dish = activeMarmitas.find((m) => m.id === cartItem.id);
       if (!dish) {
         throw new Error(`Marmita "${cartItem.id}" não encontrada no cardápio.`);
       }
@@ -448,14 +725,15 @@ export async function createPedido(payload) {
     });
 
     const nextPedidos = [newOrder, ...pedidos];
-    await writeDatabase(marmitas, nextPedidos);
+    await writeDatabase(activeMarmitas, nextPedidos);
     return newOrder;
   });
 }
 
 export async function updatePedidoStatus(id, status) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await loadWorkbookData();
+    const { marmitas, pedidos } = await readWorkbookUnsafe();
+    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
     const index = pedidos.findIndex((order) => order.id === id);
     if (index === -1) return null;
 
@@ -464,20 +742,26 @@ export async function updatePedidoStatus(id, status) {
       ...nextPedidos[index],
       status,
     };
-    await writeDatabase(marmitas, nextPedidos);
+    await writeDatabase(activeMarmitas, nextPedidos);
     return nextPedidos[index];
   });
 }
 
+export async function getExcelFileBuffer() {
+  const { stored } = await loadWorkbookData();
+  return stored.buffer;
+}
+
 export async function getExcelSnapshot() {
-  const { marmitas, pedidos } = await loadWorkbookData();
+  const { marmitas, pedidos, stored } = await loadWorkbookData();
   const dbPath = getDbPath();
-  const stats = await fs.stat(dbPath);
   return {
     filePath: dbPath,
     fileName: path.basename(dbPath),
-    sizeBytes: stats.size,
-    updatedAt: stats.mtime.toISOString(),
+    sizeBytes: stored.sizeBytes,
+    updatedAt: stored.updatedAt,
+    persistence: getPersistenceInfo(),
+    insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
     sheets: [
       {
         name: 'Marmitas',

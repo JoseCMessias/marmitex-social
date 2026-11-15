@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import {
+  AlertTriangle,
   CheckCircle2,
   ClipboardList,
+  Clock,
   Copy,
   Download,
   Edit3,
@@ -28,9 +30,12 @@ import { OrdersTab } from './OrdersTab';
 export function AdminDashboard({
   marmitas,
   pedidos,
+  persistence,
+  ttlMinutes = 10,
   onSaveMarmita,
   onToggleField,
   onDeleteMarmita,
+  onCleanupInserted,
   onUpdateOrderStatus,
   onRefreshAll,
 }) {
@@ -41,6 +46,7 @@ export function AdminDashboard({
   const [editingItem, setEditingItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
   const [excelRefreshKey, setExcelRefreshKey] = useState(0);
 
   const filteredMarmitas = marmitas.filter((item) => {
@@ -101,10 +107,38 @@ export function AdminDashboard({
     setExcelRefreshKey((k) => k + 1);
   };
 
+  const handleCleanupClick = async () => {
+    if (!onCleanupInserted) return;
+    setCleaningUp(true);
+    try {
+      await onCleanupInserted();
+      setExcelRefreshKey((k) => k + 1);
+    } finally {
+      setCleaningUp(false);
+    }
+  };
+
+  const insertedCount = marmitas.filter((m) => m.temporario).length;
+
+  const getExpiryLabel = (item) => {
+    if (!item.temporario) return null;
+    if (item.expiraEm) {
+      const remainingMin = Math.max(
+        1,
+        Math.ceil((Date.parse(item.expiraEm) - Date.now()) / 60000)
+      );
+      if (Number.isFinite(remainingMin)) {
+        return `Remove em ${remainingMin} min`;
+      }
+    }
+    return `Auto-remove ${ttlMinutes} min`;
+  };
+
   const enrichedMarmitas = filteredMarmitas.map((item) => ({
     item,
     effective: getEffectivePrice(item),
     hasPromo: Boolean(item.precoPromocional && Number(item.precoPromocional) < Number(item.preco)),
+    expiryLabel: getExpiryLabel(item),
   }));
 
   const renderStatusButtons = (item, layout = 'stack') => (
@@ -192,7 +226,9 @@ export function AdminDashboard({
         <div className="min-w-0">
           <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-extrabold text-emerald-700 ring-1 ring-emerald-200 sm:text-xs">
             <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Planilha Excel Conectada (CRUD em Tempo Real)</span>
+            <span className="truncate">
+              {persistence?.label || 'Planilha Excel Conectada (CRUD em Tempo Real)'}
+            </span>
           </div>
           <h1 className="mt-2 font-display text-xl font-extrabold text-stone-900 sm:text-3xl">
             Painel do Administrador
@@ -222,6 +258,42 @@ export function AdminDashboard({
           </button>
         </div>
       </div>
+
+      {/* Persistence / Auto-Cleanup Alerts */}
+      {persistence && !persistence.persistent && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-950 sm:p-4 sm:text-sm">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <p className="leading-relaxed">
+            <strong>Modo temporário (/tmp) na Vercel:</strong> conecte um{' '}
+            <strong>Vercel Blob Store</strong> (<code className="font-mono">BLOB_READ_WRITE_TOKEN</code>) ao
+            projeto da API para manter os pratos inseridos na planilha entre refreshes e múltiplas
+            instâncias.
+          </p>
+        </div>
+      )}
+
+      {insertedCount > 0 && (
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-orange-200 bg-orange-50/70 p-3.5 sm:flex-row sm:items-center sm:p-4">
+          <div className="flex items-start gap-2.5 text-xs text-orange-950 sm:text-sm">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
+            <span>
+              <strong>{insertedCount} prato(s) inserido(s)</strong> na planilha. A limpeza automática
+              remove pratos inseridos após <strong>{ttlMinutes} minutos</strong>.
+            </span>
+          </div>
+          {onCleanupInserted && (
+            <button
+              type="button"
+              disabled={cleaningUp}
+              onClick={handleCleanupClick}
+              className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-orange-300 bg-white px-3.5 py-2 text-xs font-extrabold text-orange-800 transition hover:bg-orange-100 disabled:opacity-60 sm:w-auto"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>{cleaningUp ? 'Limpando...' : 'Limpar Inseridos Agora'}</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* KPI Metrics */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
@@ -344,7 +416,7 @@ export function AdminDashboard({
                 Nenhuma marmita encontrada com esse filtro.
               </div>
             ) : (
-              enrichedMarmitas.map(({ item, effective, hasPromo }) => (
+              enrichedMarmitas.map(({ item, effective, hasPromo, expiryLabel }) => (
                 <article
                   key={item.id}
                   className="space-y-3 rounded-2xl border border-stone-200 bg-white p-3.5 shadow-2xs"
@@ -369,6 +441,11 @@ export function AdminDashboard({
                         {item.destaque && (
                           <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-800">
                             <Sparkles className="h-2.5 w-2.5" /> Destaque
+                          </span>
+                        )}
+                        {expiryLabel && (
+                          <span className="inline-flex items-center gap-0.5 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-extrabold text-orange-800">
+                            <Clock className="h-2.5 w-2.5" /> {expiryLabel}
                           </span>
                         )}
                       </div>
@@ -424,7 +501,7 @@ export function AdminDashboard({
                     </td>
                   </tr>
                 ) : (
-                  enrichedMarmitas.map(({ item, effective, hasPromo }) => (
+                  enrichedMarmitas.map(({ item, effective, hasPromo, expiryLabel }) => (
                     <tr key={item.id} className="transition hover:bg-orange-50/30">
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
@@ -437,13 +514,18 @@ export function AdminDashboard({
                             className="h-14 w-16 shrink-0 rounded-xl object-cover ring-1 ring-stone-200"
                           />
                           <div className="min-w-0 max-w-xs">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <span className="font-mono text-[11px] font-bold text-stone-400">
                                 {item.id}
                               </span>
                               {item.destaque && (
                                 <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-800">
                                   <Sparkles className="h-2.5 w-2.5" /> Destaque
+                                </span>
+                              )}
+                              {expiryLabel && (
+                                <span className="inline-flex items-center gap-0.5 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-extrabold text-orange-800">
+                                  <Clock className="h-2.5 w-2.5" /> {expiryLabel}
                                 </span>
                               )}
                             </div>

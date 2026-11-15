@@ -10,13 +10,16 @@ const testExcelPath = path.join(tempDir, 'test_marmitex.xlsx');
 process.env.EXCEL_DB_PATH = testExcelPath;
 
 const {
+  cleanupInsertedMarmitas,
   createMarmita,
   createPedido,
   deleteMarmita,
   ensureDatabase,
   getMarmitaById,
+  isInsertedMarmita,
   listMarmitas,
   listPedidos,
+  startInsertedDishCleanupScheduler,
   updateMarmita,
   updatePedidoStatus,
 } = await import('../src/db/excelDb.js');
@@ -100,5 +103,73 @@ describe('MarmitexSocial Excel Database CRUD', () => {
 
     const updatedOrder = await updatePedidoStatus(order.id, 'Em Preparo');
     assert.equal(updatedOrder.status, 'Em Preparo');
+  });
+
+  it('keeps inserted dishes in Excel within 10 minutes and auto-deletes them after 10 minutes', async () => {
+    const created = await createMarmita({
+      nome: 'Prato Temporário de Teste',
+      descricao: 'Prato inserido manualmente para testar persistência e limpeza.',
+      categoria: 'Tradicional',
+      gosto: 'Caseiro',
+      preco: 30.0,
+      precoPromocional: null,
+      tamanho: '500g',
+      calorias: 500,
+      tempoPreparo: '25-35 min',
+      imagem: '/images/marmitas/feijoada.jpg',
+      disponivel: true,
+      destaque: false,
+    });
+
+    assert.equal(isInsertedMarmita(created), true);
+
+    // Survives subsequent Excel reads before 10 minutes
+    const afterRefresh = await listMarmitas();
+    assert.ok(afterRefresh.some((item) => item.id === created.id));
+
+    // At 5 minutes it is NOT deleted yet
+    const at5Min = await cleanupInsertedMarmitas({
+      now: Date.parse(created.criadoEm) + 5 * 60 * 1000,
+    });
+    assert.equal(at5Min.deletedCount, 0);
+    assert.ok(await getMarmitaById(created.id));
+
+    // At 10 minutes it IS deleted while seeded dishes stay intact
+    const at10Min = await cleanupInsertedMarmitas({
+      now: Date.parse(created.criadoEm) + 10 * 60 * 1000,
+    });
+    assert.equal(at10Min.deletedCount, 1);
+    assert.deepEqual(at10Min.deletedIds, [created.id]);
+    assert.equal(await getMarmitaById(created.id), null);
+
+    const remaining = await listMarmitas();
+    assert.ok(remaining.some((item) => item.id === 'MARM-101'));
+
+    // Also test automatic lazy cleanup on read when TTL is configured to 0ms
+    const prevTtl = process.env.INSERTED_MARMITA_TTL_MS;
+    process.env.INSERTED_MARMITA_TTL_MS = '0';
+    try {
+      const ephemeral = await createMarmita({
+        nome: 'Prato Expirado Imediato',
+        descricao: 'Deve expirar na leitura seguinte.',
+        categoria: 'Tradicional',
+        preco: 25.0,
+      });
+      const listAfterExpiry = await listMarmitas();
+      assert.equal(
+        listAfterExpiry.some((item) => item.id === ephemeral.id),
+        false
+      );
+    } finally {
+      if (prevTtl === undefined) {
+        delete process.env.INSERTED_MARMITA_TTL_MS;
+      } else {
+        process.env.INSERTED_MARMITA_TTL_MS = prevTtl;
+      }
+    }
+
+    const stopScheduler = startInsertedDishCleanupScheduler(60000);
+    assert.equal(typeof stopScheduler, 'function');
+    stopScheduler();
   });
 });

@@ -3,7 +3,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
-import { ensureDatabase, getDbPath, getExcelSnapshot } from './db/excelDb.js';
+import {
+  cleanupInsertedMarmitas,
+  ensureDatabase,
+  getDbPath,
+  getExcelFileBuffer,
+  getExcelSnapshot,
+  getInsertedDishTtlMs,
+  getPersistenceInfo,
+  isBlobStorageEnabled,
+  readBlobBuffer,
+  startInsertedDishCleanupScheduler,
+} from './db/excelDb.js';
 import { getUploadsDir, marmitasRouter } from './routes/marmitas.js';
 import { pedidosRouter } from './routes/pedidos.js';
 
@@ -16,7 +27,29 @@ export function createApp() {
   app.use(cors());
   app.use(express.json({ limit: '2mb' }));
 
+  app.use('/api', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
+
   app.use('/uploads', express.static(getUploadsDir()));
+  app.get('/uploads/:filename', async (req, res, next) => {
+    if (!isBlobStorageEnabled()) return next();
+    try {
+      const safeName = path.basename(req.params.filename);
+      const result = await readBlobBuffer(`uploads/${safeName}`);
+      if (!result) {
+        return res.status(404).json({ error: 'Imagem não encontrada.' });
+      }
+      res.setHeader('Content-Type', result.blob?.contentType || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(result.buffer);
+    } catch (err) {
+      return next(err);
+    }
+  });
 
   app.get('/api/health', async (_req, res, next) => {
     try {
@@ -26,6 +59,24 @@ export function createApp() {
         service: 'MarmitexSocial API',
         database: 'Excel (.xlsx)',
         filePath: getDbPath(),
+        persistence: getPersistenceInfo(),
+        insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/api/cron/cleanup', async (req, res, next) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const result = await cleanupInsertedMarmitas();
+      res.json({
+        ...result,
+        message: 'Limpeza de pratos inseridos executada com sucesso.',
       });
     } catch (err) {
       next(err);
@@ -46,9 +97,13 @@ export function createApp() {
 
   app.get('/api/excel/download', async (_req, res, next) => {
     try {
-      await ensureDatabase();
-      const dbPath = getDbPath();
-      res.download(dbPath, 'marmitex_social.xlsx');
+      const buffer = await getExcelFileBuffer();
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('Content-Disposition', 'attachment; filename="marmitex_social.xlsx"');
+      res.send(buffer);
     } catch (err) {
       next(err);
     }
@@ -71,8 +126,16 @@ export function createApp() {
   const apiInfoPayload = () => ({
     status: 'ok',
     service: 'MarmitexSocial API',
-    database: process.env.VERCEL ? 'Excel (.xlsx em /tmp temporário)' : 'Excel (.xlsx)',
-    endpoints: ['/api/health', '/api/marmitas', '/api/pedidos', '/api/excel/snapshot'],
+    database: 'Excel (.xlsx)',
+    persistence: getPersistenceInfo(),
+    insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
+    endpoints: [
+      '/api/health',
+      '/api/marmitas',
+      '/api/marmitas/cleanup',
+      '/api/pedidos',
+      '/api/excel/snapshot',
+    ],
   });
 
   app.get('/', (_req, res) => {
@@ -103,11 +166,24 @@ if (isDirectRun) {
   const PORT = Number(process.env.PORT) || 3001;
   app.listen(PORT, () => {
     console.log(`MarmitexSocial API rodando em http://localhost:${PORT}`);
-    console.log(`Planilha Excel conectada em: ${getDbPath()}`);
+    console.log(`Planilha Excel conectada em: ${getDbPath()} (${getPersistenceInfo().label})`);
+    console.log(
+      `Limpeza automática de pratos inseridos configurada a cada ${Math.round(
+        getInsertedDishTtlMs() / 60000
+      )} minuto(s).`
+    );
   });
-  ensureDatabase().catch((err) => {
-    console.error('Falha ao inicializar banco Excel:', err);
-  });
+  ensureDatabase()
+    .then(() => {
+      startInsertedDishCleanupScheduler(undefined, (result) => {
+        console.log(
+          `[Auto-Cleanup] ${result.deletedCount} prato(s) inserido(s) removido(s): ${result.deletedIds.join(', ')}`
+        );
+      });
+    })
+    .catch((err) => {
+      console.error('Falha ao inicializar banco Excel:', err);
+    });
 }
 
 export default app;

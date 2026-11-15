@@ -21,6 +21,8 @@ export function App() {
   const [activeView, setActiveView] = useState(getInitialView);
   const [marmitas, setMarmitas] = useState([]);
   const [pedidos, setPedidos] = useState([]);
+  const [persistence, setPersistence] = useState(null);
+  const [ttlMinutes, setTtlMinutes] = useState(10);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -84,12 +86,19 @@ export function App() {
     const maxAttempts = 5;
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        const [marmitasList, pedidosList] = await Promise.all([
+        const [marmitasList, pedidosList, healthInfo] = await Promise.all([
           api.listMarmitas(),
           api.listPedidos(),
+          api.getHealth().catch(() => null),
         ]);
         setMarmitas(marmitasList);
         setPedidos(pedidosList);
+        if (healthInfo?.persistence) {
+          setPersistence(healthInfo.persistence);
+        }
+        if (Number.isFinite(Number(healthInfo?.insertedDishTtlMinutes))) {
+          setTtlMinutes(Number(healthInfo.insertedDishTtlMinutes));
+        }
         setLoading(false);
         return;
       } catch (err) {
@@ -284,6 +293,22 @@ export function App() {
     }
   };
 
+  const handleCleanupInsertedMarmitas = async () => {
+    try {
+      const result = await api.cleanupInsertedMarmitas(true);
+      await loadAllData();
+      if (result.deletedIds?.length) {
+        const deletedSet = new Set(result.deletedIds);
+        setCartItems((prev) => prev.filter((entry) => !deletedSet.has(entry.marmita.id)));
+      }
+      showToast(result.message || 'Pratos inseridos removidos da planilha!');
+      return result;
+    } catch (err) {
+      showToast(err.message || 'Erro ao limpar pratos inseridos.', 'error');
+      throw err;
+    }
+  };
+
   const handleUpdateOrderStatus = async (id, status) => {
     try {
       const updated = await api.updatePedidoStatus(id, status);
@@ -337,9 +362,12 @@ export function App() {
           <AdminDashboard
             marmitas={marmitas}
             pedidos={pedidos}
+            persistence={persistence}
+            ttlMinutes={ttlMinutes}
             onSaveMarmita={handleSaveMarmita}
             onToggleField={handleToggleMarmitaField}
             onDeleteMarmita={handleDeleteMarmita}
+            onCleanupInserted={handleCleanupInsertedMarmitas}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onRefreshAll={loadAllData}
           />

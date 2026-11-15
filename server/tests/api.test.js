@@ -46,9 +46,12 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(healthRes.status, 200);
     const health = await healthRes.json();
     assert.equal(health.database, 'Excel (.xlsx)');
+    assert.equal(health.insertedDishTtlMinutes, 10);
+    assert.equal(health.persistence.persistent, true);
 
     const listRes = await fetch(`${baseUrl}/api/marmitas`);
     assert.equal(listRes.status, 200);
+    assert.match(listRes.headers.get('cache-control') || '', /no-store/);
     const listData = await listRes.json();
     assert.ok(listData.items.length >= 8);
 
@@ -124,5 +127,40 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(delRes.status, 200);
     const afterDel = await fetch(`${baseUrl}/api/marmitas/${created.id}`);
     assert.equal(afterDel.status, 404);
+
+    // Create another dish, confirm it stays on normal refresh and cleanup respects 10-min TTL until forced
+    const tempDishRes = await fetch(`${baseUrl}/api/marmitas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: 'Escondidinho Temporário',
+        descricao: 'Prato de teste para endpoint de limpeza.',
+        categoria: 'Tradicional',
+        preco: 29.0,
+      }),
+    });
+    assert.equal(tempDishRes.status, 201);
+    const tempDish = (await tempDishRes.json()).item;
+    assert.equal(tempDish.temporario, true);
+    assert.ok(tempDish.expiraEm);
+
+    const softCleanupRes = await fetch(`${baseUrl}/api/marmitas/cleanup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: false }),
+    });
+    assert.equal(softCleanupRes.status, 200);
+    const softCleanup = await softCleanupRes.json();
+    assert.equal(softCleanup.deletedCount, 0);
+
+    const forceCleanupRes = await fetch(`${baseUrl}/api/marmitas/cleanup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: true }),
+    });
+    assert.equal(forceCleanupRes.status, 200);
+    const forceCleanup = await forceCleanupRes.json();
+    assert.equal(forceCleanup.deletedCount, 1);
+    assert.deepEqual(forceCleanup.deletedIds, [tempDish.id]);
   });
 });

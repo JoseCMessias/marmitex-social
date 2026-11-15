@@ -7,6 +7,7 @@ const API_BASE = `${API_ORIGIN}/api`;
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
+    cache: 'no-store',
     headers: {
       ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
@@ -22,6 +23,10 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  async getHealth() {
+    return request('/health');
+  },
+
   // Marmitas CRUD
   async listMarmitas(params = {}) {
     const query = new URLSearchParams();
@@ -60,6 +65,13 @@ export const api = {
   async deleteMarmita(id) {
     return request(`/marmitas/${encodeURIComponent(id)}`, {
       method: 'DELETE',
+    });
+  },
+
+  async cleanupInsertedMarmitas(force = false) {
+    return request('/marmitas/cleanup', {
+      method: 'POST',
+      body: JSON.stringify({ force }),
     });
   },
 

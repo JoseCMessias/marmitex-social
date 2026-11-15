@@ -5,11 +5,15 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import multer from 'multer';
 import {
+  cleanupInsertedMarmitas,
   createMarmita,
   deleteMarmita,
   getMarmitaById,
+  isBlobStorageEnabled,
   listMarmitas,
+  serializeMarmita,
   updateMarmita,
+  writeBlobBuffer,
 } from '../db/excelDb.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,7 +29,13 @@ export function getUploadsDir() {
   return path.resolve(__dirname, '../../uploads');
 }
 
-const storage = multer.diskStorage({
+function buildSafeImageFilename(originalName) {
+  const ext = path.extname(originalName || '').toLowerCase() || '.jpg';
+  const safeExt = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext) ? ext : '.jpg';
+  return `marmita-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`;
+}
+
+const diskStorage = multer.diskStorage({
   destination: async (_req, _file, cb) => {
     try {
       const uploadsDir = getUploadsDir();
@@ -36,14 +46,11 @@ const storage = multer.diskStorage({
     }
   },
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
-    const safeExt = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext) ? ext : '.jpg';
-    cb(null, `marmita-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`);
+    cb(null, buildSafeImageFilename(file.originalname));
   },
 });
 
-const upload = multer({
-  storage,
+const uploadOptions = {
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype && file.mimetype.startsWith('image/')) {
@@ -52,7 +59,15 @@ const upload = multer({
       cb(new Error('Envie apenas arquivos de imagem (PNG, JPG ou WEBP).'));
     }
   },
-});
+};
+
+const diskUpload = multer({ storage: diskStorage, ...uploadOptions });
+const memoryUpload = multer({ storage: multer.memoryStorage(), ...uploadOptions });
+
+function uploadSingleImage(req, res, next) {
+  const middleware = (isBlobStorageEnabled() ? memoryUpload : diskUpload).single('image');
+  return middleware(req, res, next);
+}
 
 function validateMarmitaPayload(body, isUpdate = false) {
   const errors = [];
@@ -153,11 +168,28 @@ marmitasRouter.get('/', async (req, res, next) => {
       );
     }
 
-    res.json({ items });
+    res.json({ items: items.map(serializeMarmita) });
   } catch (err) {
     next(err);
   }
 });
+
+async function handleCleanup(req, res, next) {
+  try {
+    const force = req.body?.force === true || req.query?.force === 'true';
+    const result = await cleanupInsertedMarmitas({ force });
+    const message =
+      result.deletedCount > 0
+        ? `${result.deletedCount} prato(s) inserido(s) removido(s) da planilha Excel.`
+        : 'Nenhum prato inserido elegível para exclusão no momento.';
+    res.json({ ...result, message });
+  } catch (err) {
+    next(err);
+  }
+}
+
+marmitasRouter.get('/cleanup', handleCleanup);
+marmitasRouter.post('/cleanup', handleCleanup);
 
 marmitasRouter.get('/:id', async (req, res, next) => {
   try {
@@ -165,17 +197,32 @@ marmitasRouter.get('/:id', async (req, res, next) => {
     if (!item) {
       return res.status(404).json({ error: 'Marmita não encontrada.' });
     }
-    res.json({ item });
+    res.json({ item: serializeMarmita(item) });
   } catch (err) {
     next(err);
   }
 });
 
-marmitasRouter.post('/upload', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhuma imagem foi enviada.' });
+marmitasRouter.post('/upload', uploadSingleImage, async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhuma imagem foi enviada.' });
+    }
+    if (isBlobStorageEnabled() && req.file.buffer) {
+      const filename = buildSafeImageFilename(req.file.originalname);
+      const { blob, access } = await writeBlobBuffer(
+        `uploads/${filename}`,
+        req.file.buffer,
+        req.file.mimetype || 'image/jpeg',
+        31536000
+      );
+      const url = access === 'public' ? blob.url : `/uploads/${filename}`;
+      return res.status(201).json({ url });
+    }
+    res.status(201).json({ url: `/uploads/${req.file.filename}` });
+  } catch (err) {
+    next(err);
   }
-  res.status(201).json({ url: `/uploads/${req.file.filename}` });
 });
 
 marmitasRouter.post('/', async (req, res, next) => {
@@ -187,7 +234,10 @@ marmitasRouter.post('/', async (req, res, next) => {
 
     const payload = sanitizeMarmitaBody(req.body);
     const created = await createMarmita(payload);
-    res.status(201).json({ item: created, message: 'Marmita cadastrada na planilha Excel!' });
+    res.status(201).json({
+      item: serializeMarmita(created),
+      message: 'Marmita cadastrada na planilha Excel!',
+    });
   } catch (err) {
     next(err);
   }
@@ -211,7 +261,10 @@ async function handleUpdate(req, res, next) {
 
     const payload = sanitizeMarmitaBody(req.body);
     const updated = await updateMarmita(req.params.id, payload);
-    res.json({ item: updated, message: 'Marmita atualizada na planilha Excel!' });
+    res.json({
+      item: serializeMarmita(updated),
+      message: 'Marmita atualizada na planilha Excel!',
+    });
   } catch (err) {
     next(err);
   }

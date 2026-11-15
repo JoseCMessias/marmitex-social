@@ -42,6 +42,10 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
               <p className="mt-1 text-xs text-stone-600">
                 Tamanho: {(snapshot.sizeBytes / 1024).toFixed(1)} KB • Última gravação:{' '}
                 {new Date(snapshot.updatedAt).toLocaleString('pt-BR')}
+                {snapshot.persistence?.label ? ` • ${snapshot.persistence.label}` : ''}
+                {snapshot.insertedDishTtlMinutes
+                  ? ` • Limpeza automática: ${snapshot.insertedDishTtlMinutes} min`
+                  : ''}
               </p>
             )}
           </div>
