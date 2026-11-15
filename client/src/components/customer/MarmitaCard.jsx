@@ -106,14 +106,14 @@ export function MarmitaCard({
         </div>
 
         {/* Price + High-Conversion Buy Action */}
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-2.5 border-t border-stone-100 pt-3.5">
-          <div className="min-w-0">
+        <div className="mt-4 flex items-end justify-between gap-2 border-t border-stone-100 pt-3.5">
+          <div className="min-w-0 flex-1">
             {discount > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                 <span className="text-xs font-medium text-stone-400 line-through">
                   {formatBRL(marmita.preco)}
                 </span>
-                <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                <span className="whitespace-nowrap rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
                   Economize {formatBRL(Number(marmita.preco) - effectivePrice)}
                 </span>
               </div>
@@ -122,7 +122,7 @@ export function MarmitaCard({
                 Por apenas
               </span>
             )}
-            <div className="font-display text-xl font-extrabold tracking-tight text-stone-900 sm:text-2xl">
+            <div className="whitespace-nowrap font-display text-xl font-extrabold leading-tight tracking-tight text-stone-900 sm:text-2xl">
               {formatBRL(effectivePrice)}
             </div>
           </div>
