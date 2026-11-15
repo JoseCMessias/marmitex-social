@@ -18,6 +18,7 @@ import {
 } from './db/excelDb.js';
 import { adminRouter } from './routes/admin.js';
 import { getUploadsDir, marmitasRouter } from './routes/marmitas.js';
+import { pagamentosRouter } from './routes/pagamentos.js';
 import { pedidosRouter } from './routes/pedidos.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -87,6 +88,7 @@ export function createApp() {
 
   app.use('/api/admin', adminRouter);
   app.use('/api/marmitas', marmitasRouter);
+  app.use('/api/pagamentos', pagamentosRouter);
   app.use('/api/pedidos', pedidosRouter);
 
   app.get('/api/excel/snapshot', requireAdminAuth, async (_req, res, next) => {
@@ -138,6 +140,7 @@ export function createApp() {
       '/api/admin/session',
       '/api/marmitas',
       '/api/marmitas/cleanup',
+      '/api/pagamentos/pix',
       '/api/pedidos',
       '/api/excel/snapshot',
     ],

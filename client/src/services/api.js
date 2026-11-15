@@ -193,7 +193,15 @@ export const api = {
     };
   },
 
-  // Pedidos
+  // Pagamentos & Pedidos
+  async generatePixQr(payload) {
+    const res = await request('/pagamentos/pix', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.pix;
+  },
+
   async listPedidos() {
     const res = await request('/pedidos');
     return res.items;

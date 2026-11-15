@@ -172,7 +172,8 @@ const PEDIDOS_COLUMNS = [
   { header: 'clienteNome', key: 'clienteNome', width: 26 },
   { header: 'clienteTelefone', key: 'clienteTelefone', width: 18 },
   { header: 'endereco', key: 'endereco', width: 42 },
-  { header: 'formaPagamento', key: 'formaPagamento', width: 20 },
+  { header: 'formaPagamento', key: 'formaPagamento', width: 38 },
+  { header: 'pagamentoJson', key: 'pagamentoJson', width: 42 },
   { header: 'observacoes', key: 'observacoes', width: 32 },
   { header: 'itensResumo', key: 'itensResumo', width: 48 },
   { header: 'itensJson', key: 'itensJson', width: 52 },
@@ -426,12 +427,25 @@ function hydratePedido(raw) {
       itens = [];
     }
   }
+  let pagamentoDetalhes = null;
+  if (raw.pagamentoJson) {
+    try {
+      const parsed = JSON.parse(String(raw.pagamentoJson));
+      if (parsed && typeof parsed === 'object') {
+        pagamentoDetalhes = parsed;
+      }
+    } catch {
+      pagamentoDetalhes = null;
+    }
+  }
   return {
     id: String(raw.id ?? '').trim(),
     clienteNome: String(raw.clienteNome ?? '').trim(),
     clienteTelefone: String(raw.clienteTelefone ?? '').trim(),
     endereco: String(raw.endereco ?? '').trim(),
     formaPagamento: String(raw.formaPagamento ?? 'Pix').trim(),
+    pagamentoJson: String(raw.pagamentoJson ?? ''),
+    pagamentoDetalhes,
     observacoes: String(raw.observacoes ?? '').trim(),
     itensResumo: String(raw.itensResumo ?? '').trim(),
     itensJson: String(raw.itensJson ?? '[]'),
@@ -726,6 +740,7 @@ export async function createPedido(payload) {
       clienteTelefone: payload.clienteTelefone,
       endereco: payload.endereco,
       formaPagamento: payload.formaPagamento || 'Pix',
+      pagamentoJson: payload.pagamentoDetalhes ? JSON.stringify(payload.pagamentoDetalhes) : '',
       observacoes: payload.observacoes || '',
       itensResumo,
       itensJson: JSON.stringify(itemsWithDetails),

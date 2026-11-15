@@ -10,6 +10,63 @@ const VALID_STATUSES = [
   'Cancelado',
 ];
 
+const VALID_PAYMENT_METHODS = [
+  'Pix',
+  'Cartão de Crédito',
+  'Cartão de Débito',
+  'Vale-Alimentação',
+  'Vale-Benefício',
+  'Cartão na Entrega',
+  'Vale-Refeição',
+  'Dinheiro',
+];
+
+function sanitizePaymentDetails(rawDetails, fallbackMethod) {
+  if (!rawDetails || typeof rawDetails !== 'object') {
+    return null;
+  }
+
+  const metodoRaw = String(rawDetails.metodo || fallbackMethod || 'Pix').trim().slice(0, 40);
+  const modo = rawDetails.modo === 'Online' ? 'Online' : 'Entrega';
+  const statusPagamento = String(
+    rawDetails.statusPagamento || (modo === 'Online' ? 'Pago Online' : 'Pagar na Entrega')
+  )
+    .trim()
+    .slice(0, 40);
+
+  const sanitized = {
+    metodo: metodoRaw,
+    modo,
+    statusPagamento,
+  };
+
+  if (rawDetails.bandeira) {
+    sanitized.bandeira = String(rawDetails.bandeira).trim().slice(0, 30);
+  }
+
+  const parcelas = Number(rawDetails.parcelas);
+  if (Number.isInteger(parcelas) && parcelas >= 1 && parcelas <= 12) {
+    sanitized.parcelas = parcelas;
+  }
+
+  const last4Match = String(rawDetails.ultimosDigitos ?? '').match(/^\d{4}$/);
+  if (last4Match) {
+    sanitized.ultimosDigitos = last4Match[0];
+  }
+
+  if (rawDetails.txid) {
+    sanitized.txid = String(rawDetails.txid)
+      .replace(/[^A-Za-z0-9]/g, '')
+      .slice(0, 25);
+  }
+
+  if (rawDetails.trocoPara) {
+    sanitized.trocoPara = String(rawDetails.trocoPara).trim().slice(0, 25);
+  }
+
+  return sanitized;
+}
+
 export const pedidosRouter = express.Router();
 
 pedidosRouter.get('/', requireAdminAuth, async (_req, res, next) => {
@@ -23,7 +80,15 @@ pedidosRouter.get('/', requireAdminAuth, async (_req, res, next) => {
 
 pedidosRouter.post('/', async (req, res, next) => {
   try {
-    const { clienteNome, clienteTelefone, endereco, formaPagamento, observacoes, itens } = req.body;
+    const {
+      clienteNome,
+      clienteTelefone,
+      endereco,
+      formaPagamento,
+      pagamentoDetalhes,
+      observacoes,
+      itens,
+    } = req.body;
 
     if (!String(clienteNome ?? '').trim()) {
       return res.status(400).json({ error: 'Informe o seu nome para o pedido.' });
@@ -38,11 +103,18 @@ pedidosRouter.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Adicione pelo menos uma marmita ao carrinho.' });
     }
 
+    const methodLabel = String(formaPagamento || 'Pix').trim().slice(0, 90);
+    const sanitizedDetails = sanitizePaymentDetails(
+      pagamentoDetalhes,
+      VALID_PAYMENT_METHODS.find((m) => methodLabel.startsWith(m)) || methodLabel
+    );
+
     const order = await createPedido({
       clienteNome: String(clienteNome).trim(),
       clienteTelefone: String(clienteTelefone).trim(),
       endereco: String(endereco).trim(),
-      formaPagamento: String(formaPagamento || 'Pix').trim(),
+      formaPagamento: methodLabel,
+      pagamentoDetalhes: sanitizedDetails,
       observacoes: String(observacoes || '').trim(),
       itens,
     });

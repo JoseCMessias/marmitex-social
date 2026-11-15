@@ -87,7 +87,29 @@ export function OrdersTab({ pedidos, onUpdateStatus }) {
 
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
               <div className="text-left sm:text-right">
-                <div className="text-xs font-medium text-stone-500">{order.formaPagamento}</div>
+                {order.pagamentoDetalhes?.statusPagamento && (
+                  <span
+                    className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      order.pagamentoDetalhes.modo === 'Online' ||
+                      String(order.pagamentoDetalhes.statusPagamento).toLowerCase().includes('pago')
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {order.pagamentoDetalhes.statusPagamento}
+                  </span>
+                )}
+                <div className="text-xs font-medium text-stone-600">{order.formaPagamento}</div>
+                {order.pagamentoDetalhes?.txid && (
+                  <div className="font-mono text-[10px] text-stone-400">
+                    TXID: {order.pagamentoDetalhes.txid}
+                  </div>
+                )}
+                {order.pagamentoDetalhes?.trocoPara && (
+                  <div className="text-[11px] font-semibold text-amber-700">
+                    Troco p/: {order.pagamentoDetalhes.trocoPara}
+                  </div>
+                )}
                 <div className="font-display text-xl font-extrabold text-emerald-700">
                   {formatBRL(order.total)}
                 </div>

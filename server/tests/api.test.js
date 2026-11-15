@@ -252,4 +252,109 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     });
     assert.equal(invalidUploadRes.status, 400);
   });
+
+  it('generates Pix BR Code and stores sanitized payment metadata without raw card secrets', async () => {
+    const badPixRes = await fetch(`${baseUrl}/api/pagamentos/pix`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valor: 0 }),
+    });
+    assert.equal(badPixRes.status, 400);
+
+    const pixRes = await fetch(`${baseUrl}/api/pagamentos/pix`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        valor: 64.5,
+        clienteNome: 'Maria José',
+        txid: 'PED-999!',
+      }),
+    });
+    assert.equal(pixRes.status, 200);
+    const { pix } = await pixRes.json();
+    assert.equal(pix.txid, 'PED999');
+    assert.equal(pix.valor, 64.5);
+    assert.equal(pix.expiraEmMinutos, 15);
+    assert.ok(pix.brCode.startsWith('000201010211'));
+    assert.ok(pix.brCode.includes('540564.50'));
+    assert.match(pix.crc16, /^[0-9A-F]{4}$/);
+
+    const listRes = await fetch(`${baseUrl}/api/marmitas`);
+    const listData = await listRes.json();
+    const dishId = listData.items[0].id;
+
+    // Simulate online credit card checkout ensuring raw card fields are stripped server-side
+    const cardOrderRes = await fetch(`${baseUrl}/api/pedidos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clienteNome: 'Carlos Andrade',
+        clienteTelefone: '(11) 98888-7777',
+        endereco: 'Rua das Flores, 120 - Centro',
+        formaPagamento: 'Cartão de Crédito (Mastercard 3x • Final 4321)',
+        pagamentoDetalhes: {
+          metodo: 'Cartão de Crédito',
+          modo: 'Online',
+          statusPagamento: 'Pago Online',
+          bandeira: 'Mastercard',
+          parcelas: 3,
+          ultimosDigitos: '4321',
+          numeroCartao: '5555444433334321',
+          cvv: '999',
+          validade: '12/30',
+        },
+        itens: [{ id: dishId, quantidade: 2 }],
+      }),
+    });
+    assert.equal(cardOrderRes.status, 201);
+    const { order: cardOrder } = await cardOrderRes.json();
+    assert.equal(cardOrder.pagamentoDetalhes?.metodo, 'Cartão de Crédito');
+    assert.equal(cardOrder.pagamentoDetalhes?.modo, 'Online');
+    assert.equal(cardOrder.pagamentoDetalhes?.statusPagamento, 'Pago Online');
+    assert.equal(cardOrder.pagamentoDetalhes?.bandeira, 'Mastercard');
+    assert.equal(cardOrder.pagamentoDetalhes?.parcelas, 3);
+    assert.equal(cardOrder.pagamentoDetalhes?.ultimosDigitos, '4321');
+    assert.equal('numeroCartao' in cardOrder.pagamentoDetalhes, false);
+    assert.equal('cvv' in cardOrder.pagamentoDetalhes, false);
+    assert.equal('validade' in cardOrder.pagamentoDetalhes, false);
+    assert.ok(!cardOrder.pagamentoJson.includes('55554444'));
+    assert.ok(!cardOrder.pagamentoJson.includes('999'));
+
+    // Voucher / delivery order
+    const voucherOrderRes = await fetch(`${baseUrl}/api/pedidos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clienteNome: 'Ana Beatriz',
+        clienteTelefone: '(11) 97777-6666',
+        endereco: 'Av. Paulista, 900',
+        formaPagamento: 'Vale-Alimentação (Alelo • Maquininha na Entrega)',
+        pagamentoDetalhes: {
+          metodo: 'Vale-Alimentação',
+          modo: 'Entrega',
+          statusPagamento: 'Pagar na Entrega',
+          bandeira: 'Alelo',
+        },
+        itens: [{ id: dishId, quantidade: 1 }],
+      }),
+    });
+    assert.equal(voucherOrderRes.status, 201);
+
+    const loginRes = await fetch(`${baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+    });
+    const { token } = await loginRes.json();
+
+    const pedidosRes = await fetch(`${baseUrl}/api/pedidos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(pedidosRes.status, 200);
+    const { items: pedidos } = await pedidosRes.json();
+    const persistedCard = pedidos.find((p) => p.id === cardOrder.id);
+    assert.ok(persistedCard);
+    assert.equal(persistedCard.pagamentoDetalhes?.ultimosDigitos, '4321');
+    assert.equal(persistedCard.pagamentoDetalhes?.parcelas, 3);
+  });
 });

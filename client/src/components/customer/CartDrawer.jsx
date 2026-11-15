@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ArrowRight,
   CheckCircle2,
   CreditCard,
   MapPin,
@@ -12,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { FALLBACK_IMAGE, formatBRL, getEffectivePrice } from '../../utils/format';
+import { PaymentScreen } from './PaymentScreen';
 
 export function CartDrawer({
   isOpen,
@@ -24,12 +26,19 @@ export function CartDrawer({
   confirmedOrder,
   onClearConfirmedOrder,
 }) {
+  const [step, setStep] = useState('cart');
   const [clienteNome, setClienteNome] = useState('');
   const [clienteTelefone, setClienteTelefone] = useState('');
   const [endereco, setEndereco] = useState('');
-  const [formaPagamento, setFormaPagamento] = useState('Pix');
   const [observacoes, setObservacoes] = useState('');
   const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    if (!isOpen || confirmedOrder) {
+      setStep('cart');
+      setFormError('');
+    }
+  }, [isOpen, confirmedOrder]);
 
   if (!isOpen) return null;
 
@@ -38,7 +47,13 @@ export function CartDrawer({
     0
   );
 
-  const handleCheckout = async (e) => {
+  const handleClose = () => {
+    setStep('cart');
+    setFormError('');
+    onClose();
+  };
+
+  const handleProceedToPayment = (e) => {
     e.preventDefault();
     setFormError('');
 
@@ -47,12 +62,18 @@ export function CartDrawer({
       return;
     }
 
+    setStep('payment');
+  };
+
+  const handleConfirmPayment = async ({ formaPagamento, pagamentoDetalhes }) => {
+    setFormError('');
     try {
       await onSubmitOrder({
         clienteNome: clienteNome.trim(),
         clienteTelefone: clienteTelefone.trim(),
         endereco: endereco.trim(),
         formaPagamento,
+        pagamentoDetalhes,
         observacoes: observacoes.trim(),
         itens: cartItems.map((item) => ({
           id: item.marmita.id,
@@ -61,40 +82,60 @@ export function CartDrawer({
         })),
       });
       setObservacoes('');
+      setStep('cart');
     } catch (err) {
       setFormError(err.message || 'Erro ao finalizar pedido.');
     }
   };
 
+  const confirmedPay = confirmedOrder?.pagamentoDetalhes;
+  const isConfirmedPaidOnline =
+    confirmedPay?.modo === 'Online' ||
+    String(confirmedPay?.statusPagamento || '').toLowerCase().includes('pago');
+
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end bg-stone-950/60 backdrop-blur-xs"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <aside
-        className="flex h-[100dvh] w-full max-w-md flex-col bg-[#FFFBF5] shadow-2xl"
+        className={`flex h-[100dvh] w-full flex-col bg-[#FFFBF5] shadow-2xl transition-[max-width] duration-200 ${
+          step === 'payment' && !confirmedOrder ? 'max-w-lg' : 'max-w-md'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
         <div className="flex items-center justify-between border-b border-orange-100 bg-white px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
-              <ShoppingBag className="h-5 w-5" />
+              {step === 'payment' && !confirmedOrder ? (
+                <CreditCard className="h-5 w-5" />
+              ) : (
+                <ShoppingBag className="h-5 w-5" />
+              )}
             </div>
             <div>
               <h2 className="font-display text-lg font-extrabold text-stone-900">
-                {confirmedOrder ? 'Pedido Confirmado!' : 'Sua Sacola'}
+                {confirmedOrder
+                  ? 'Pedido Confirmado!'
+                  : step === 'payment'
+                    ? 'Pagamento Seguro'
+                    : 'Sua Sacola'}
               </h2>
               <p className="text-xs font-medium text-stone-500">
                 {confirmedOrder
                   ? 'Preparando sua marmita quentinha'
-                  : 'Entrega grátis • 25–35 min'}
+                  : step === 'payment'
+                    ? 'Etapa 2 de 2 • Escolha Pix, cartão, vale ou dinheiro'
+                    : cartItems.length > 0
+                      ? 'Etapa 1 de 2 • Entrega grátis (25–35 min)'
+                      : 'Entrega grátis • 25–35 min'}
               </p>
             </div>
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="cursor-pointer rounded-xl p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
             aria-label="Fechar sacola"
           >
@@ -104,8 +145,8 @@ export function CartDrawer({
 
         {/* Order Confirmation State */}
         {confirmedOrder ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+          <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 text-center">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
               <CheckCircle2 className="h-9 w-9" />
             </div>
             <span className="mt-4 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-200">
@@ -120,8 +161,21 @@ export function CartDrawer({
             </p>
 
             <div className="mt-6 w-full rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm">
-              <div className="text-xs font-bold uppercase tracking-wide text-stone-400">
-                Resumo da Entrega
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-bold uppercase tracking-wide text-stone-400">
+                  Resumo da Entrega
+                </div>
+                {confirmedPay?.statusPagamento && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                      isConfirmedPaidOnline
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {confirmedPay.statusPagamento}
+                  </span>
+                )}
               </div>
               <p className="mt-1.5 text-sm font-semibold text-stone-800">
                 {confirmedOrder.itensResumo}
@@ -129,11 +183,18 @@ export function CartDrawer({
               <p className="mt-2 text-xs text-stone-500">
                 Endereço: {confirmedOrder.endereco}
               </p>
-              <p className="mt-1 text-xs text-stone-500">
+              <p className="mt-1 text-xs font-medium text-stone-700">
                 Pagamento: {confirmedOrder.formaPagamento}
               </p>
+              {confirmedPay?.txid && (
+                <p className="mt-1 font-mono text-[11px] text-stone-500">
+                  TXID Pix: {confirmedPay.txid}
+                </p>
+              )}
               <div className="mt-3 flex items-center justify-between border-t border-stone-100 pt-3">
-                <span className="text-xs font-bold text-stone-500">Total Pago</span>
+                <span className="text-xs font-bold text-stone-500">
+                  {isConfirmedPaidOnline ? 'Total Pago' : 'Total na Entrega'}
+                </span>
                 <span className="font-display text-lg font-extrabold text-emerald-700">
                   {formatBRL(confirmedOrder.total)}
                 </span>
@@ -144,7 +205,7 @@ export function CartDrawer({
               type="button"
               onClick={() => {
                 onClearConfirmedOrder();
-                onClose();
+                handleClose();
               }}
               className="mt-6 w-full cursor-pointer rounded-2xl bg-orange-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-orange-600/20 transition hover:bg-orange-700"
             >
@@ -165,14 +226,33 @@ export function CartDrawer({
             </p>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="mt-6 cursor-pointer rounded-2xl bg-orange-600 px-6 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-600/20 transition hover:bg-orange-700"
             >
               Explorar Cardápio
             </button>
           </div>
+        ) : step === 'payment' ? (
+          /* Step 2: Dedicated Payment Screen (Pix QR Code, Credit, Debit, Vale, Cash) */
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+            {formError && (
+              <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+                {formError}
+              </div>
+            )}
+            <PaymentScreen
+              amount={subtotal}
+              customerName={clienteNome}
+              submitting={submitting}
+              onBack={() => {
+                setFormError('');
+                setStep('cart');
+              }}
+              onConfirmPayment={handleConfirmPayment}
+            />
+          </div>
         ) : (
-          /* Cart Items + Express Checkout Form */
+          /* Step 1: Cart Items + Delivery Info */
           <div className="flex flex-1 flex-col overflow-y-auto">
             {/* Items List */}
             <div className="space-y-3 p-4 sm:p-5">
@@ -250,13 +330,13 @@ export function CartDrawer({
               })}
             </div>
 
-            {/* Express 1-Step Checkout Form */}
+            {/* Step 1: Delivery Info Form */}
             <form
-              onSubmit={handleCheckout}
+              onSubmit={handleProceedToPayment}
               className="mt-auto space-y-3 border-t border-orange-100 bg-white p-4 sm:p-5"
             >
               <div className="text-xs font-extrabold uppercase tracking-wider text-orange-600">
-                Dados para Entrega Rápida
+                1. Dados para Entrega
               </div>
 
               {formError && (
@@ -301,28 +381,13 @@ export function CartDrawer({
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                <div className="relative">
-                  <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                  <select
-                    value={formaPagamento}
-                    onChange={(e) => setFormaPagamento(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50 py-2.5 pl-9 pr-3 text-sm font-medium focus:border-orange-500 focus:bg-white focus:outline-none"
-                  >
-                    <option value="Pix">Pix</option>
-                    <option value="Cartão na Entrega">Cartão na Entrega</option>
-                    <option value="Vale-Refeição">Vale-Refeição</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                  </select>
-                </div>
-                <input
-                  type="text"
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder="Obs. entrega (opcional)"
-                  className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm focus:border-orange-500 focus:bg-white focus:outline-none"
-                />
-              </div>
+              <input
+                type="text"
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Observações da entrega (ex: tocar interfone 42, sem talher)"
+                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm focus:border-orange-500 focus:bg-white focus:outline-none"
+              />
 
               <div className="space-y-1.5 rounded-2xl bg-[#FFFBF5] p-3 ring-1 ring-orange-100">
                 <div className="flex justify-between text-xs text-stone-600">
@@ -330,7 +395,7 @@ export function CartDrawer({
                   <span className="font-bold text-emerald-700">Grátis</span>
                 </div>
                 <div className="flex justify-between text-base font-extrabold text-stone-900">
-                  <span>Total do pedido</span>
+                  <span>Subtotal do pedido</span>
                   <span className="font-display text-xl text-emerald-700">
                     {formatBRL(subtotal)}
                   </span>
@@ -339,12 +404,10 @@ export function CartDrawer({
 
               <button
                 type="submit"
-                disabled={submitting}
-                className="w-full cursor-pointer rounded-2xl bg-emerald-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-orange-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-orange-600/25 transition hover:bg-orange-700 active:scale-[0.98]"
               >
-                {submitting
-                  ? 'Enviando Pedido...'
-                  : `Confirmar Compra • ${formatBRL(subtotal)}`}
+                <span>Ir para Pagamento • {formatBRL(subtotal)}</span>
+                <ArrowRight className="h-4 w-4" />
               </button>
             </form>
           </div>
