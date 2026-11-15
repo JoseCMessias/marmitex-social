@@ -210,6 +210,19 @@
     .receipt-box {
       background: #fff; border: 1px solid #BBF7D0; border-radius: 16px; padding: 18px; text-align: center;
     }
+    .modal-photo { position: relative; height: 220px; background: #FFF3E0; overflow: hidden; }
+    .viewport-shell.mobile .modal-photo { height: 185px; }
+    .modal-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .modal-close-btn {
+      position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 999px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.92); color: var(--text);
+      font-weight: 800; cursor: pointer; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .modal-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .modal-kpis .kpi { padding: 8px 10px; }
+    .modal-kpis .kpi strong { font-size: 14px; white-space: nowrap; }
+    .viewport-shell.mobile .modal-kpis .kpi { padding: 7px 6px; }
+    .viewport-shell.mobile .modal-kpis .kpi strong { font-size: 12px; }
   </style>
 </head>
 <body>
@@ -289,26 +302,27 @@
           <!-- TELA 2: MODAL DETALHES DO PRATO -->
           <div id="tab-modal" class="tab-panel hidden">
             <div class="card" style="max-width:520px;margin:0 auto;padding:0;overflow:hidden;">
-              <div style="position:relative;height:180px;background:#FFF3E0;">
-                <img id="modal-img" style="width:100%;height:100%;object-fit:cover;" alt="Prato" />
-                <span class="promo-tag">-15% OFF</span>
+              <div class="modal-photo">
+                <img id="modal-img" alt="Detalhes do prato" />
+                <span id="modal-promo" class="promo-tag">-15% OFF</span>
+                <button type="button" class="modal-close-btn" onclick="switchTab('store')" aria-label="Voltar ao cardápio">✕</button>
               </div>
               <div style="padding:16px;">
                 <span class="badge" id="modal-cat">Gourmet • Agridoce</span>
                 <h2 id="modal-name" style="margin-top:8px;">Salmão Grelhado ao Molho de Maracujá</h2>
                 <p class="muted" id="modal-desc">Posta de salmão grelhada com pele crocante, redução agridoce de maracujá fresco, purê cremoso de batata baroa e aspargos grelhados.</p>
-                <div class="kpi-grid" style="margin-top:12px;">
-                  <div class="kpi"><span class="muted">Porção</span><strong>480g</strong></div>
-                  <div class="kpi"><span class="muted">Preparo</span><strong>30-40 min</strong></div>
-                  <div class="kpi"><span class="muted">Calorias</span><strong>510 kcal</strong></div>
+                <div class="modal-kpis">
+                  <div class="kpi"><span class="muted">Porção</span><strong id="modal-size">480g</strong></div>
+                  <div class="kpi"><span class="muted">Preparo</span><strong id="modal-prep">30-40 min</strong></div>
+                  <div class="kpi"><span class="muted">Calorias</span><strong id="modal-kcal">510 kcal</strong></div>
                 </div>
                 <label style="font-size:12px;font-weight:700;">Observação no prato (opcional)</label>
-                <input id="modal-obs" value="Molho de maracujá à parte" style="margin:6px 0 12px;" />
+                <input id="modal-obs" placeholder="Ex: Molho à parte, sem cebola..." style="margin:6px 0 12px;" />
                 <div style="display:flex;gap:10px;align-items:center;">
                   <button class="btn btn-soft" onclick="changeModalQty(-1)">-</button>
                   <strong id="modal-qty">1</strong>
                   <button class="btn btn-soft" onclick="changeModalQty(1)">+</button>
-                  <button class="btn btn-green" style="flex:1;" onclick="addModalToCart()">Adicionar ao Pedido</button>
+                  <button id="modal-add-btn" class="btn btn-green" style="flex:1;" onclick="addModalToCart()">Adicionar • R$ 39,90</button>
                 </div>
               </div>
             </div>
@@ -669,12 +683,12 @@ Minimum version required to store current data is: `+i+`.
       pixInterval: null,
       lastReceipt: null,
       marmitas: [
-        { id: 'MARM-101', nome: 'Feijoada Completa Tradicional', cat: 'Tradicional', gosto: 'Caseiro, Bem Temperado', preco: 26.9, tam: '550g', imgFile: 'feijoada.jpg', promo: '-19% OFF', disponivel: true },
-        { id: 'MARM-102', nome: 'Frango Grelhado Fitness', cat: 'Fitness & Low Carb', gosto: 'Leve, Rico em Proteína', preco: 23.9, tam: '450g', imgFile: 'fitness-frango.jpg', promo: '-14% OFF', disponivel: true },
-        { id: 'MARM-103', nome: 'Salmão ao Molho de Maracujá', cat: 'Gourmet', gosto: 'Agridoce, Sofisticado', preco: 39.9, tam: '480g', imgFile: 'salmao-gourmet.jpg', promo: '-15% OFF', disponivel: true },
-        { id: 'MARM-104', nome: 'Bowl Vegano Mediterrâneo', cat: 'Vegetariana & Vegana', gosto: 'Leve, Sem Lactose', preco: 29.9, tam: '480g', imgFile: 'bowl-vegano.jpg', promo: '', disponivel: true },
-        { id: 'MARM-105', nome: 'Strogonoff de Carne com Batata Palha', cat: 'Tradicional', gosto: 'Cremoso, Caseiro', preco: 28.5, tam: '520g', imgFile: 'strogonoff.jpg', promo: '', disponivel: true },
-        { id: 'MARM-106', nome: 'Lasanha Bolonhesa Artesanal', cat: 'Massas', gosto: 'Gratinada, Saborosa', preco: 31.9, tam: '550g', imgFile: 'lasanha.jpg', promo: '', disponivel: true }
+        { id: 'MARM-101', nome: 'Feijoada Completa Tradicional', cat: 'Tradicional', gosto: 'Caseiro, Bem Temperado', preco: 26.9, tam: '550g', tempo: '25-35 min', kcal: '680 kcal', desc: 'Feijão preto cozido lentamente com carnes selecionadas, arroz soltinho, couve refogada no alho, farofa crocante e laranja.', imgFile: 'feijoada.jpg', promo: '-19% OFF', disponivel: true },
+        { id: 'MARM-102', nome: 'Frango Grelhado Fitness', cat: 'Fitness & Low Carb', gosto: 'Leve, Rico em Proteína', preco: 23.9, tam: '450g', tempo: '20-30 min', kcal: '420 kcal', desc: 'Filé de peito de frango grelhado nas ervas finas, cubos de batata doce assada com alecrim, arroz integral e brócolis no vapor.', imgFile: 'fitness-frango.jpg', promo: '-14% OFF', disponivel: true },
+        { id: 'MARM-103', nome: 'Salmão Grelhado ao Molho de Maracujá', cat: 'Gourmet', gosto: 'Agridoce, Sofisticado', preco: 39.9, tam: '480g', tempo: '30-40 min', kcal: '510 kcal', desc: 'Posta de salmão grelhada com pele crocante, redução agridoce de maracujá fresco, purê cremoso de batata baroa e aspargos grelhados.', imgFile: 'salmao-gourmet.jpg', promo: '-15% OFF', disponivel: true },
+        { id: 'MARM-104', nome: 'Bowl Vegano Mediterrâneo', cat: 'Vegetariana & Vegana', gosto: 'Leve, Sem Lactose', preco: 29.9, tam: '480g', tempo: '20-30 min', kcal: '390 kcal', desc: 'Quinoa dourada temperada, grão-de-bico crocante com páprica, abacate fatiado, abóbora cabotiá assada, repolho roxo e molho de tahine.', imgFile: 'bowl-vegano.jpg', promo: '', disponivel: true },
+        { id: 'MARM-105', nome: 'Strogonoff de Carne com Batata Palha', cat: 'Tradicional', gosto: 'Cremoso, Caseiro', preco: 28.5, tam: '520g', tempo: '25-35 min', kcal: '610 kcal', desc: 'Iscas de alcatra salteadas em molho cremoso de tomate e champignon, acompanhadas de arroz branco e batata palha crocante.', imgFile: 'strogonoff.jpg', promo: '', disponivel: true },
+        { id: 'MARM-106', nome: 'Lasanha Bolonhesa Artesanal', cat: 'Massas', gosto: 'Gratinada, Saborosa', preco: 31.9, tam: '550g', tempo: '30-40 min', kcal: '720 kcal', desc: 'Massa fresca artesanal em camadas intercaladas com ragu de carne cozido por horas, molho bechamel e queijo gratinado.', imgFile: 'lasanha.jpg', promo: '', disponivel: true }
       ],
       cart: [{ id: 'MARM-101', nome: 'Feijoada Completa Tradicional', preco: 26.9, qty: 1, obs: '' }],
       pedidos: [
@@ -727,18 +741,43 @@ Minimum version required to store current data is: `+i+`.
       renderAll();
     }
 
+    function renderDishModal() {
+      const d = state.marmitas.find((x) => x.id === state.modalDishId) || state.marmitas[0];
+      if (!d) return;
+      state.modalDishId = d.id;
+
+      const imgFile = d.imgFile || 'feijoada.jpg';
+      const modalImg = document.getElementById('modal-img');
+      if (modalImg && modalImg.dataset.dishFile !== imgFile) {
+        modalImg.dataset.dishFile = imgFile;
+        modalImg.dataset.retriedVercel = '';
+        modalImg.onerror = () => onDishImgError(modalImg, imgFile, d.nome);
+        modalImg.alt = d.nome;
+        modalImg.src = getImageUrl(imgFile);
+      }
+
+      const promoEl = document.getElementById('modal-promo');
+      if (promoEl) {
+        promoEl.textContent = d.promo || '';
+        promoEl.classList.toggle('hidden', !d.promo);
+      }
+
+      document.getElementById('modal-cat').textContent = `${d.cat} • ${d.gosto}`;
+      document.getElementById('modal-name').textContent = d.nome;
+      document.getElementById('modal-desc').textContent = d.desc || `${d.cat} preparada na hora com ingredientes selecionados.`;
+      document.getElementById('modal-size').textContent = d.tam || '500g';
+      document.getElementById('modal-prep').textContent = d.tempo || '25-35 min';
+      document.getElementById('modal-kcal').textContent = d.kcal || '520 kcal';
+      document.getElementById('modal-qty').textContent = state.modalQty;
+      document.getElementById('modal-add-btn').textContent = `Adicionar • ${brl(d.preco * state.modalQty)}`;
+    }
+
     function openDishModal(id) {
       const d = state.marmitas.find((x) => x.id === id);
       if (!d) return;
       state.modalDishId = id;
       state.modalQty = 1;
-      const modalImg = document.getElementById('modal-img');
-      modalImg.dataset.retriedVercel = '';
-      modalImg.onerror = () => onDishImgError(modalImg, d.imgFile, d.nome);
-      modalImg.src = getImageUrl(d.imgFile);
-      document.getElementById('modal-cat').textContent = `${d.cat} • ${d.gosto}`;
-      document.getElementById('modal-name').textContent = d.nome;
-      document.getElementById('modal-qty').textContent = 1;
+      document.getElementById('modal-obs').value = '';
       switchTab('modal');
     }
 
@@ -763,7 +802,7 @@ Minimum version required to store current data is: `+i+`.
 
     function changeModalQty(delta) {
       state.modalQty = Math.max(1, state.modalQty + delta);
-      document.getElementById('modal-qty').textContent = state.modalQty;
+      renderDishModal();
     }
 
     function addModalToCart() {
@@ -1133,6 +1172,8 @@ Minimum version required to store current data is: `+i+`.
         heroImg.onerror = () => onDishImgError(heroImg, 'feijoada.jpg', 'Feijoada Completa');
         heroImg.src = getImageUrl('feijoada.jpg');
       }
+
+      renderDishModal();
 
       const count = state.cart.reduce((s, i) => s + i.qty, 0);
       const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
