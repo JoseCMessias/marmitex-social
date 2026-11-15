@@ -1,4 +1,8 @@
-const API_ORIGIN = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const DEFAULT_VERCEL_API =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app')
+    ? 'https://server-peach-six-28.vercel.app'
+    : '';
+const API_ORIGIN = (import.meta.env.VITE_API_URL || DEFAULT_VERCEL_API).replace(/\/$/, '');
 const API_BASE = `${API_ORIGIN}/api`;
 
 async function request(path, options = {}) {

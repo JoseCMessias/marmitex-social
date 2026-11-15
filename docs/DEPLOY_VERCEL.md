@@ -66,13 +66,16 @@ Todos os três pontos já foram corrigidos:
 
 ## Passo a Passo: Deploy do Frontend (`client/`) na Vercel
 
-1. Crie um segundo projeto na Vercel apontando para o mesmo repositório `MarmitexSocial`.
-2. Configure:
+O projeto do frontend em `https://client-one-theta-55.vercel.app` já está pré-conectado à API `https://server-peach-six-28.vercel.app` via `client/vercel.json` (proxy de `/api/*` e `/uploads/*`).
+
+1. Confirme as configurações do projeto `client` na Vercel:
    - **Framework Preset:** `Vite`
    - **Root Directory:** `client`
    - **Build Command:** `npm run build`
    - **Output Directory:** `dist`
-3. Em **Environment Variables**, adicione:
+2. *(Opcional)* Se mudar o domínio da API no futuro, adicione em **Environment Variables** (ou atualize `client/vercel.json`):
    - **Name:** `VITE_API_URL`
-   - **Value:** `https://<seu-dominio-api>.vercel.app` *(a URL gerada no deploy do `server/`, sem `/` no final)*
-4. Clique em **Deploy**.
+   - **Value:** `https://server-peach-six-28.vercel.app` *(sem `/` no final)*
+3. Após enviar as alterações (`git push`), faça **Redeploy** nos dois projetos (`server-peach-six-28` e `client-one-theta-55`) e acesse:
+   - Loja: `https://client-one-theta-55.vercel.app/#/`
+   - Admin: `https://client-one-theta-55.vercel.app/#/admin`

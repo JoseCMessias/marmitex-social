@@ -54,10 +54,10 @@ export function createApp() {
     }
   });
 
-  // Serve built client when running in production mode if dist exists.
+  // Serve built client when running locally in production mode if dist exists.
   const clientDistDir = path.resolve(__dirname, '../../client/dist');
   app.use(async (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    if (process.env.VERCEL || req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       return next();
     }
     try {
@@ -68,13 +68,19 @@ export function createApp() {
     }
   });
 
+  const apiInfoPayload = () => ({
+    status: 'ok',
+    service: 'MarmitexSocial API',
+    database: process.env.VERCEL ? 'Excel (.xlsx em /tmp temporário)' : 'Excel (.xlsx)',
+    endpoints: ['/api/health', '/api/marmitas', '/api/pedidos', '/api/excel/snapshot'],
+  });
+
   app.get('/', (_req, res) => {
-    res.json({
-      status: 'ok',
-      service: 'MarmitexSocial API',
-      database: process.env.VERCEL ? 'Excel (.xlsx em /tmp temporário)' : 'Excel (.xlsx)',
-      endpoints: ['/api/health', '/api/marmitas', '/api/pedidos', '/api/excel/snapshot'],
-    });
+    res.json(apiInfoPayload());
+  });
+
+  app.get('/api', (_req, res) => {
+    res.json(apiInfoPayload());
   });
 
   app.use((err, _req, res, _next) => {
