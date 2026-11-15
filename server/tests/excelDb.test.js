@@ -11,6 +11,7 @@ process.env.EXCEL_DB_PATH = testExcelPath;
 
 const {
   BACKUP_SHEET_NAME,
+  captureBackupBaseline,
   cleanupInsertedMarmitas,
   createMarmita,
   createPedido,
@@ -279,6 +280,19 @@ describe('MarmitexSocial Excel Database CRUD', () => {
         process.env.MAIN_MARMITA_RESTORE_DELAY_MS = prevDelay;
       }
     }
+
+    // 4. Explicit baseline capture commits current spreadsheet values as the new immutable backup
+    await updateMarmita('MARM-101', { nome: 'Feijoada Oficial Atualizada' });
+    const captured = await captureBackupBaseline({ ids: ['MARM-101'] });
+    assert.equal(captured.updatedCount, 1);
+    assert.deepEqual(captured.updatedIds, ['MARM-101']);
+    assert.equal(captured.backup.pendingRestoreCount, 0);
+    assert.equal((await getBackupEntryById('MARM-101')).nome, 'Feijoada Oficial Atualizada');
+
+    await updateMarmita('MARM-101', { nome: 'Edicao Temporaria Depois do Baseline' });
+    const revertedToBaseline = await restoreDeletedMainMarmitas({ force: true, ids: ['MARM-101'] });
+    assert.equal(revertedToBaseline.restoredCount, 1);
+    assert.equal((await getMarmitaById('MARM-101')).nome, 'Feijoada Oficial Atualizada');
   });
 
   it('detects Vercel Blob via BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID with OIDC on Vercel', () => {

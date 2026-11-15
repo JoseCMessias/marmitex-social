@@ -904,6 +904,66 @@ export async function restoreDeletedMainMarmitas({
   });
 }
 
+/**
+ * Explicitly commits the current active main-dish rows in `Marmitas` as the immutable
+ * `BackupCardapio` baseline snapshot when an administrator confirms permanent menu updates.
+ */
+export async function captureBackupBaseline({ ids = null, now = Date.now() } = {}) {
+  return withWriteLock(async () => {
+    const nowMs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+    const targetIds = Array.isArray(ids) ? new Set(ids.map((id) => String(id))) : null;
+
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, {
+      hasBackupSheet,
+      now: nowMs,
+    });
+
+    const activeById = new Map(reconciled.marmitas.map((item) => [item.id, item]));
+    const prevBackupById = new Map(reconciled.backupEntries.map((entry) => [entry.id, entry]));
+    const nextBackup = [];
+    const updatedIds = [];
+
+    for (const seedItem of INITIAL_MARMITAS) {
+      const active = activeById.get(seedItem.id);
+      const prevBackup = prevBackupById.get(seedItem.id);
+      const isTargeted = targetIds === null || targetIds.has(seedItem.id);
+
+      if (isTargeted && active) {
+        nextBackup.push(
+          buildBackupEntry(active, {
+            backupEm: nowIso,
+            deletadoEm: '',
+            restaurarEm: '',
+          })
+        );
+        updatedIds.push(seedItem.id);
+      } else if (prevBackup) {
+        nextBackup.push(prevBackup);
+      } else {
+        nextBackup.push(
+          buildBackupEntry(active || seedItem, {
+            backupEm: nowIso,
+            deletadoEm: active ? '' : nowIso,
+            restaurarEm: active ? '' : new Date(nowMs + getMainDishBackupDelayMs()).toISOString(),
+          })
+        );
+      }
+    }
+
+    if (updatedIds.length > 0 || reconciled.changed) {
+      await writeDatabase(reconciled.marmitas, pedidos, nextBackup);
+    }
+
+    return {
+      updatedCount: updatedIds.length,
+      updatedIds,
+      backup: summarizeBackupEntries(nextBackup),
+    };
+  });
+}
+
 export function startInsertedDishCleanupScheduler(
   intervalMs = Math.min(60 * 1000, getInsertedDishTtlMs(), getMainDishBackupDelayMs()),
   onCleaned = null

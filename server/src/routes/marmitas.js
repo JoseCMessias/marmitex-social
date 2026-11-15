@@ -6,6 +6,7 @@ import express from 'express';
 import multer from 'multer';
 import { requireAdminAuth } from '../auth/adminAuth.js';
 import {
+  captureBackupBaseline,
   cleanupInsertedMarmitas,
   createMarmita,
   deleteMarmita,
@@ -219,6 +220,23 @@ marmitasRouter.post('/backup/restore', requireAdminAuth, async (req, res, next) 
     res.json({
       ...result,
       restoredItems: result.restoredItems.map(serializeMarmita),
+      message,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+marmitasRouter.post('/backup/baseline', requireAdminAuth, async (req, res, next) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids : null;
+    const result = await captureBackupBaseline({ ids });
+    const message =
+      result.updatedCount > 0
+        ? `Backup base atualizado para ${result.updatedCount} item(ns) principal(is).`
+        : 'Nenhum item principal ativo elegível para atualizar o backup base.';
+    res.json({
+      ...result,
       message,
     });
   } catch (err) {

@@ -288,6 +288,37 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(restoredMain.nome, origMain.nome);
     assert.equal(restoredMain.precoPromocional, origMain.precoPromocional);
 
+    // Explicit admin baseline capture commits an updated baseline without normal edits touching backup
+    const baselineEditRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
+      method: 'PUT',
+      headers: authHeaders,
+      body: JSON.stringify({ nome: `${origMain.nome} Revisada` }),
+    });
+    assert.equal(baselineEditRes.status, 200);
+    const baselineCommitRes = await fetch(`${baseUrl}/api/marmitas/backup/baseline`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ ids: ['MARM-101'] }),
+    });
+    assert.equal(baselineCommitRes.status, 200);
+    const baselineCommitData = await baselineCommitRes.json();
+    assert.equal(baselineCommitData.updatedCount, 1);
+    assert.deepEqual(baselineCommitData.updatedIds, ['MARM-101']);
+    assert.equal(baselineCommitData.backup.pendingRestoreCount, 0);
+
+    await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
+      method: 'PUT',
+      headers: authHeaders,
+      body: JSON.stringify({ nome: 'Teste Efemero Pós-Baseline' }),
+    });
+    await fetch(`${baseUrl}/api/marmitas/backup/restore`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ force: true, ids: ['MARM-101'] }),
+    });
+    const afterBaselineRestore = await (await fetch(`${baseUrl}/api/marmitas/MARM-101`)).json();
+    assert.equal(afterBaselineRestore.item.nome, `${origMain.nome} Revisada`);
+
     // Upload image via Multer 2.x (valid image + invalid mime rejection)
     const validForm = new FormData();
     validForm.append('image', new Blob([Uint8Array.from([137, 80, 78, 71])], { type: 'image/png' }), 'prato.png');

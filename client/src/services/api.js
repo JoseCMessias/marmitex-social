@@ -187,6 +187,13 @@ export const api = {
     });
   },
 
+  async saveBackupBaseline({ ids = null } = {}) {
+    return request('/marmitas/backup/baseline', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
   async uploadImage(file) {
     const formData = new FormData();
     formData.append('image', file);
