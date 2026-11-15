@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -13,13 +14,23 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+
+export function getUploadsDir() {
+  if (process.env.UPLOADS_DIR) {
+    return path.resolve(process.env.UPLOADS_DIR);
+  }
+  if (process.env.VERCEL) {
+    return path.join(os.tmpdir(), 'marmitex-uploads');
+  }
+  return path.resolve(__dirname, '../../uploads');
+}
 
 const storage = multer.diskStorage({
   destination: async (_req, _file, cb) => {
     try {
-      await fs.mkdir(UPLOADS_DIR, { recursive: true });
-      cb(null, UPLOADS_DIR);
+      const uploadsDir = getUploadsDir();
+      await fs.mkdir(uploadsDir, { recursive: true });
+      cb(null, uploadsDir);
     } catch (err) {
       cb(err);
     }

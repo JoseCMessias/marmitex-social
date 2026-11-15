@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ExcelJS from 'exceljs';
@@ -10,9 +11,14 @@ const __dirname = path.dirname(__filename);
 export const DEFAULT_DB_PATH = path.resolve(__dirname, '../../data/marmitex_social.xlsx');
 
 export function getDbPath() {
-  return process.env.EXCEL_DB_PATH
-    ? path.resolve(process.env.EXCEL_DB_PATH)
-    : DEFAULT_DB_PATH;
+  if (process.env.EXCEL_DB_PATH) {
+    return path.resolve(process.env.EXCEL_DB_PATH);
+  }
+  // Vercel serverless filesystem (/var/task) is read-only; /tmp is writable while warm.
+  if (process.env.VERCEL) {
+    return path.join(os.tmpdir(), 'marmitex_social.xlsx');
+  }
+  return DEFAULT_DB_PATH;
 }
 
 const MARMITAS_COLUMNS = [

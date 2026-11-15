@@ -1,4 +1,5 @@
-const API_BASE = '/api';
+const API_ORIGIN = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE = `${API_ORIGIN}/api`;
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -61,10 +62,14 @@ export const api = {
   async uploadImage(file) {
     const formData = new FormData();
     formData.append('image', file);
-    return request('/marmitas/upload', {
+    const res = await request('/marmitas/upload', {
       method: 'POST',
       body: formData,
     });
+    return {
+      ...res,
+      url: res.url && res.url.startsWith('/') && API_ORIGIN ? `${API_ORIGIN}${res.url}` : res.url,
+    };
   },
 
   // Pedidos

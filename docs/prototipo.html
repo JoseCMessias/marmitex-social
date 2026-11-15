@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Protótipo Interativo — MarmitexSocial</title>
+  <title>Protótipo de Telas — MarmitexSocial</title>
   <style>
     :root {
       --bg: #FFFBF5;
@@ -15,7 +15,6 @@
       --orange: #EA580C;
       --orange-dark: #C2410C;
       --amber: #F59E0B;
-      --amber-bg: #FEF3C7;
       --green: #16A34A;
       --green-dark: #15803D;
       --red: #DC2626;
@@ -30,7 +29,7 @@
       line-height: 1.45;
       padding: 20px;
     }
-    .container { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+    .container { max-width: 1220px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -38,145 +37,86 @@
       padding: 18px;
       box-shadow: 0 2px 10px rgba(28, 25, 23, 0.04);
     }
-    .header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-    }
+    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; }
     .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #FFF7ED;
-      color: var(--orange);
-      border: 1px solid #FED7AA;
+      display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800;
+      padding: 3px 10px; border-radius: 999px; background: #FFF7ED; color: var(--orange); border: 1px solid #FED7AA;
     }
     h1 { margin: 6px 0 4px; font-size: 22px; }
     h2 { margin: 0 0 8px; font-size: 18px; }
     h3 { margin: 0 0 8px; font-size: 14px; }
     p.muted { margin: 0; color: var(--muted); font-size: 13px; }
-    .swatches { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
-    .swatch {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 10px;
-      background: var(--soft);
-      border: 1px solid var(--border);
-      font-weight: 600;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.15); }
+    .device-switch { display: inline-flex; background: var(--soft); border: 1px solid var(--border); padding: 4px; border-radius: 12px; gap: 4px; }
+    .dev-btn { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--muted); }
+    .dev-btn.active { background: var(--text); color: #fff; }
 
     .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .tab-btn {
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text);
-      padding: 9px 14px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 700;
-      transition: 0.15s ease;
+      cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 8px 13px; border-radius: 12px; font-size: 12px; font-weight: 700; transition: 0.15s ease;
     }
     .tab-btn:hover { background: #FFF7ED; border-color: #FDBA74; }
     .tab-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
 
-    .grid-main { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
-    @media (max-width: 900px) { .grid-main { grid-template-columns: 1fr; } }
+    .grid-main { display: grid; grid-template-columns: 2.2fr 1fr; gap: 18px; align-items: start; }
+    @media (max-width: 960px) { .grid-main { grid-template-columns: 1fr; } }
 
-    .browser-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding-bottom: 12px;
-      margin-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
+    .viewport-shell { transition: all 0.2s ease; margin: 0 auto; width: 100%; }
+    .viewport-shell.mobile {
+      max-width: 390px;
+      border: 8px solid #292524;
+      border-radius: 30px;
+      padding: 12px;
+      background: var(--bg);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.16);
     }
-    .dots { display: flex; align-items: center; gap: 6px; }
-    .win-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .url-box {
-      font-family: Consolas, monospace;
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--soft);
-      border: 1px solid var(--border);
-      padding: 4px 10px;
-      border-radius: 8px;
-      margin-left: 8px;
+
+    .app-topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px;
     }
-    .cart-pill {
-      background: var(--green);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 800;
-      padding: 6px 12px;
-      border-radius: 10px;
-      border: 0;
-      cursor: pointer;
+    .brand-mark { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; }
+    .brand-icon {
+      width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #F97316, #EA580C);
+      color: #fff; display: grid; place-items: center; font-size: 14px;
     }
 
     .hero {
-      background: linear-gradient(120deg, #EA580C, #F59E0B);
-      color: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 14px;
+      background: linear-gradient(120deg, #EA580C, #F59E0B); color: #fff; border-radius: 16px;
+      padding: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;
     }
     .hero-card {
-      background: #fff;
-      color: var(--text);
-      border-radius: 14px;
-      padding: 12px;
-      min-width: 220px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      background: #fff; color: var(--text); border-radius: 14px; padding: 10px; display: flex; gap: 10px;
+      align-items: center; max-width: 310px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
+    .hero-card img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; }
 
-    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .pill {
-      font-size: 12px;
-      font-weight: 700;
-      padding: 5px 11px;
-      border-radius: 999px;
-      background: var(--soft);
-      border: 1px solid var(--border);
-      cursor: pointer;
+      font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px;
+      background: var(--soft); border: 1px solid var(--border); cursor: pointer;
     }
     .pill.active { background: var(--orange); color: #fff; border-color: var(--orange); }
 
-    .dish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .dish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
     .dish-card {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 8px;
+      border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: #fff;
+      display: flex; flex-direction: column;
     }
+    .dish-photo { position: relative; height: 126px; background: #FFF3E0; cursor: pointer; }
+    .dish-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .promo-tag {
+      position: absolute; top: 8px; left: 8px; background: #DC2626; color: #fff; font-size: 10px;
+      font-weight: 800; padding: 3px 8px; border-radius: 999px;
+    }
+    .size-tag {
+      position: absolute; bottom: 8px; right: 8px; background: rgba(28,25,23,0.8); color: #fff;
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+    }
+    .dish-body { padding: 12px; display: flex; flex-direction: column; flex: 1; gap: 6px; }
+
     .btn {
-      cursor: pointer;
-      border: 0;
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 800;
-      transition: 0.15s ease;
+      cursor: pointer; border: 0; border-radius: 10px; padding: 7px 12px; font-size: 12px; font-weight: 800; transition: 0.15s ease;
     }
     .btn-green { background: var(--green); color: #fff; }
     .btn-green:hover { background: var(--green-dark); }
@@ -185,203 +125,271 @@
     .btn-soft { background: var(--soft); color: var(--text); border: 1px solid var(--border); }
     .btn-red { background: #FEE2E2; color: var(--red); }
 
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .kpi { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #fff; }
+    .kpi strong { font-size: 18px; display: block; margin-top: 4px; }
+
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
     th { background: var(--soft); color: var(--muted); font-size: 11px; text-transform: uppercase; }
     .excel-head th { background: var(--orange); color: #fff; font-family: Consolas, monospace; text-transform: none; }
 
-    input, select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 12px;
-      background: var(--soft);
-      color: var(--text);
+    input, select, textarea {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 12px; background: var(--soft); color: var(--text); font-family: inherit;
     }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .form-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
     .hidden { display: none !important; }
-    .status-ok { background: #DCFCE7; color: #166534; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11px; }
-    .status-off { background: #E7E5E4; color: #44403C; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11px; }
+    .status-ok { background: #DCFCE7; color: #166534; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11px; border: 0; cursor: pointer; }
+    .status-off { background: #E7E5E4; color: #44403C; padding: 3px 8px; border-radius: 999px; font-weight: 700; font-size: 11px; border: 0; cursor: pointer; }
     .flow-box { background: var(--soft); border: 1px solid var(--border); border-radius: 12px; padding: 10px; font-size: 12px; margin-top: 8px; }
+    .floating-bar {
+      margin-top: 12px; background: var(--green); color: #fff; border-radius: 14px; padding: 10px 14px;
+      display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 13px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card header">
       <div>
-        <span class="badge">Protótipo Interativo de Produto • MarmitexSocial</span>
-        <h1>Prototipagem de Telas, Fluxo de Compra e CRUD Excel</h1>
-        <p class="muted">Simulação interativa completa da visão do cliente, do administrador e da planilha <code>server/data/marmitex_social.xlsx</code>.</p>
+        <span class="badge">Protótipo Visual de Todas as Telas • MarmitexSocial</span>
+        <h1>Protótipo Interativo de Telas (Desktop e Mobile)</h1>
+        <p class="muted">Navegue por todas as 7 telas do aplicativo, alterne entre Desktop e Celular e simule compras e operações CRUD do Excel.</p>
       </div>
-      <div class="swatches">
-        <span class="swatch"><span class="dot" style="background:#FFFBF5"></span> #FFFBF5 Leitura</span>
-        <span class="swatch"><span class="dot" style="background:#EA580C"></span> #EA580C Apetite</span>
-        <span class="swatch"><span class="dot" style="background:#16A34A"></span> #16A34A Comprar</span>
+      <div class="device-switch">
+        <button class="dev-btn active" id="btn-desktop" onclick="setDevice('desktop')">Desktop</button>
+        <button class="dev-btn" id="btn-mobile" onclick="setDevice('mobile')">Celular (390px)</button>
       </div>
     </div>
 
+    <!-- 7 SCREEN TABS -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="store">1. Visão Cliente: Cardápio</button>
-      <button class="tab-btn" data-tab="modal">2. Modal Detalhes do Prato</button>
-      <button class="tab-btn" data-tab="checkout">3. Sacola &amp; Compra Simples</button>
-      <button class="tab-btn" data-tab="admin">4. Visão Admin: CRUD</button>
-      <button class="tab-btn" data-tab="excel">5. Planilha Excel (.xlsx)</button>
+      <button class="tab-btn active" data-tab="store">Tela 1: Cardápio (Cliente)</button>
+      <button class="tab-btn" data-tab="modal">Tela 2: Detalhes do Prato</button>
+      <button class="tab-btn" data-tab="checkout">Tela 3: Sacola &amp; Checkout</button>
+      <button class="tab-btn" data-tab="admin">Tela 4: Admin — Marmitas</button>
+      <button class="tab-btn" data-tab="adminform">Tela 5: Modal Cadastro / Edição</button>
+      <button class="tab-btn" data-tab="orders">Tela 6: Admin — Pedidos</button>
+      <button class="tab-btn" data-tab="excel">Tela 7: Planilha Excel (.xlsx)</button>
     </div>
 
     <div class="grid-main">
       <div class="card">
-        <div class="browser-bar">
-          <div class="dots">
-            <span class="win-dot" style="background:#F87171"></span>
-            <span class="win-dot" style="background:#FBBF24"></span>
-            <span class="win-dot" style="background:#34D399"></span>
-            <span class="url-box" id="url-box">http://localhost:5173/#/</span>
-          </div>
-          <button class="cart-pill" id="cart-pill" onclick="switchTab('checkout')">Sacola: 1 item (R$ 26,90)</button>
-        </div>
-
-        <!-- TAB 1: STORE -->
-        <div id="tab-store" class="tab-panel">
-          <div class="hero">
-            <div style="max-width: 340px;">
-              <div style="font-size:11px;font-weight:800;opacity:.9;">ENTREGA RÁPIDA • 25-35 MIN</div>
-              <h2 style="margin-top:4px;color:#fff;">Marmitas irresistíveis para todos os gostos</h2>
-              <p style="margin:0;font-size:12px;opacity:.95;">Do caseiro tradicional ao fitness, vegano e gourmet.</p>
+        <div class="viewport-shell" id="viewport-shell">
+          <!-- Simulated App Header -->
+          <div class="app-topbar">
+            <div class="brand-mark">
+              <div class="brand-icon">M</div>
+              <div>Marmitex<span style="color:var(--orange)">Social</span></div>
             </div>
-            <div class="hero-card">
-              <div style="font-size:11px;font-weight:800;color:#B45309;">★ DESTAQUE DO CHEF</div>
-              <div style="font-weight:800;margin:4px 0;">Feijoada Completa Tradicional</div>
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-                <strong style="color:#EA580C;font-size:16px;">R$ 26,90</strong>
-                <button class="btn btn-green" onclick="addCart('MARM-101')">+ Comprar</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button class="btn btn-soft" onclick="switchTab('store')">Cardápio</button>
+              <button class="btn btn-soft" onclick="switchTab('admin')">Admin</button>
+              <button class="btn btn-green" id="top-cart-btn" onclick="switchTab('checkout')">Sacola (1)</button>
+            </div>
+          </div>
+
+          <!-- TELA 1: CARDÁPIO DO CLIENTE -->
+          <div id="tab-store" class="tab-panel">
+            <div class="hero">
+              <div style="max-width: 340px;">
+                <div style="font-size:11px;font-weight:800;opacity:.9;">ENTREGA RÁPIDA • 25-35 MIN • FRETE GRÁTIS</div>
+                <h2 style="margin-top:4px;color:#fff;">Marmitas irresistíveis para todos os gostos</h2>
+                <p style="margin:0;font-size:12px;opacity:.95;">Do caseiro tradicional ao fitness, vegano e gourmet.</p>
+              </div>
+              <div class="hero-card">
+                <img src="../client/public/images/marmitas/feijoada.jpg" onerror="this.style.display='none'" alt="Feijoada" />
+                <div>
+                  <div style="font-size:10px;font-weight:800;color:#B45309;">★ DESTAQUE DO CHEF</div>
+                  <div style="font-weight:800;font-size:13px;">Feijoada Completa</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                    <strong style="color:#EA580C;">R$ 26,90</strong>
+                    <button class="btn btn-green" style="padding:4px 9px;" onclick="addCart('MARM-101')">+ Comprar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pills" id="cat-pills"></div>
+            <div class="dish-grid" id="store-grid"></div>
+            <div class="floating-bar hidden" id="floating-bar" onclick="switchTab('checkout')">
+              <span id="floating-text">1 item na sacola • Finalizar Pedido Agora</span>
+              <span id="floating-total">R$ 26,90 →</span>
+            </div>
+          </div>
+
+          <!-- TELA 2: MODAL DETALHES DO PRATO -->
+          <div id="tab-modal" class="tab-panel hidden">
+            <div class="card" style="max-width:520px;margin:0 auto;padding:0;overflow:hidden;">
+              <div style="position:relative;height:180px;background:#FFF3E0;">
+                <img id="modal-img" src="../client/public/images/marmitas/salmao-gourmet.jpg" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;" alt="Prato" />
+                <span class="promo-tag">-15% OFF</span>
+              </div>
+              <div style="padding:16px;">
+                <span class="badge" id="modal-cat">Gourmet • Agridoce</span>
+                <h2 id="modal-name" style="margin-top:8px;">Salmão Grelhado ao Molho de Maracujá</h2>
+                <p class="muted" id="modal-desc">Posta de salmão grelhada com pele crocante, redução agridoce de maracujá fresco, purê cremoso de batata baroa e aspargos grelhados.</p>
+                <div class="kpi-grid" style="margin-top:12px;">
+                  <div class="kpi"><span class="muted">Porção</span><strong>480g</strong></div>
+                  <div class="kpi"><span class="muted">Preparo</span><strong>30-40 min</strong></div>
+                  <div class="kpi"><span class="muted">Calorias</span><strong>510 kcal</strong></div>
+                </div>
+                <label style="font-size:12px;font-weight:700;">Observação no prato (opcional)</label>
+                <input id="modal-obs" value="Molho de maracujá à parte" style="margin:6px 0 12px;" />
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <button class="btn btn-soft" onclick="changeModalQty(-1)">-</button>
+                  <strong id="modal-qty">1</strong>
+                  <button class="btn btn-soft" onclick="changeModalQty(1)">+</button>
+                  <button class="btn btn-green" style="flex:1;" onclick="addModalToCart()">Adicionar ao Pedido</button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="pills" id="cat-pills"></div>
-          <div class="dish-grid" id="store-grid"></div>
-        </div>
-
-        <!-- TAB 2: MODAL -->
-        <div id="tab-modal" class="tab-panel hidden">
-          <div class="flow-box" style="margin-top:0;">
-            <span class="badge">Gourmet • Agridoce</span>
-            <h2 style="margin-top:8px;">Salmão Grelhado ao Molho de Maracujá</h2>
-            <p class="muted">Posta de salmão grelhada com pele crocante, redução agridoce de maracujá fresco, purê de batata baroa e aspargos grelhados.</p>
-            <div class="form-grid" style="margin-top:12px;">
-              <div class="card" style="padding:10px;text-align:center;"><strong>480g</strong><div class="muted">Porção</div></div>
-              <div class="card" style="padding:10px;text-align:center;"><strong>30-40 min</strong><div class="muted">Preparo</div></div>
-              <div class="card" style="padding:10px;text-align:center;"><strong>510 kcal</strong><div class="muted">Energia</div></div>
-            </div>
-            <label style="font-size:12px;font-weight:700;">Observação no prato (opcional)</label>
-            <input id="modal-obs" value="Molho de maracujá à parte" style="margin:6px 0 12px;" />
-            <div style="display:flex;gap:10px;align-items:center;">
-              <button class="btn btn-soft" onclick="changeModalQty(-1)">-</button>
-              <strong id="modal-qty">1</strong>
-              <button class="btn btn-soft" onclick="changeModalQty(1)">+</button>
-              <button class="btn btn-green" style="flex:1;" onclick="addModalToCart()">Adicionar ao Pedido</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 3: CHECKOUT -->
-        <div id="tab-checkout" class="tab-panel hidden">
-          <div class="grid-main" style="grid-template-columns:1fr 1fr;">
-            <div>
-              <h3>Itens na Sacola</h3>
-              <div id="checkout-items" style="display:flex;flex-direction:column;gap:8px;"></div>
-              <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-weight:800;">
-                <span>Total (Frete Grátis)</span>
-                <span id="checkout-total" style="color:var(--green);">R$ 26,90</span>
+          <!-- TELA 3: SACOLA E CHECKOUT -->
+          <div id="tab-checkout" class="tab-panel hidden">
+            <div class="form-2col">
+              <div>
+                <h3>Itens na Sacola</h3>
+                <div id="checkout-items" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-weight:800;">
+                  <span>Total (Frete Grátis)</span>
+                  <span id="checkout-total" style="color:var(--green);">R$ 26,90</span>
+                </div>
               </div>
-            </div>
-            <div class="flow-box" style="margin-top:0;">
-              <h3 style="color:var(--orange);">Checkout em 1 Passo</h3>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                <input id="cli-nome" value="Maria Silva" placeholder="Nome completo" />
-                <input id="cli-tel" value="(11) 98888-7777" placeholder="WhatsApp" />
-                <input id="cli-end" value="Rua das Flores, 120 - Centro" placeholder="Endereço completo" />
-                <select id="cli-pag">
-                  <option>Pix</option>
-                  <option>Cartão na Entrega</option>
-                  <option>Vale-Refeição</option>
-                  <option>Dinheiro</option>
-                </select>
-                <button class="btn btn-green" onclick="placeDemoOrder()">Confirmar Compra</button>
-                <div id="order-feedback" class="hidden" style="background:#DCFCE7;color:#166534;padding:10px;border-radius:10px;font-size:12px;font-weight:700;"></div>
+              <div class="flow-box" style="margin-top:0;">
+                <h3 style="color:var(--orange);">Dados para Entrega Rápida</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <input id="cli-nome" value="Maria Silva" placeholder="Nome completo" />
+                  <input id="cli-tel" value="(11) 98888-7777" placeholder="WhatsApp" />
+                  <input id="cli-end" value="Rua das Flores, 120 - Centro" placeholder="Endereço completo" />
+                  <select id="cli-pag">
+                    <option>Pix</option>
+                    <option>Cartão na Entrega</option>
+                    <option>Vale-Refeição</option>
+                    <option>Dinheiro</option>
+                  </select>
+                  <button class="btn btn-green" onclick="placeDemoOrder()">Confirmar Compra</button>
+                  <div id="order-feedback" class="hidden" style="background:#DCFCE7;color:#166534;padding:10px;border-radius:10px;font-size:12px;font-weight:700;"></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- TAB 4: ADMIN CRUD -->
-        <div id="tab-admin" class="tab-panel hidden">
-          <h3>Cadastrar / Editar Marmita na Planilha (Simulação)</h3>
-          <div class="form-grid">
-            <input type="hidden" id="edit-id" />
-            <input id="f-nome" placeholder="Nome da marmita" />
-            <select id="f-cat">
-              <option>Tradicional</option>
-              <option>Fitness & Low Carb</option>
-              <option>Vegetariana & Vegana</option>
-              <option>Executiva</option>
-              <option>Gourmet</option>
-              <option>Massas</option>
-            </select>
-            <input id="f-gosto" placeholder="Gosto (ex: Caseiro, Leve)" />
-            <input id="f-preco" type="number" step="0.01" placeholder="Preço (R$)" />
-            <button class="btn btn-orange" onclick="saveAdminMarmita()">Salvar na Planilha</button>
+          <!-- TELA 4: ADMIN GERENCIAR MARMITAS -->
+          <div id="tab-admin" class="tab-panel hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+              <div>
+                <span class="badge">Planilha Excel Conectada</span>
+                <h2 style="margin-top:4px;">Painel do Administrador</h2>
+              </div>
+              <button class="btn btn-orange" onclick="openNewMarmitaForm()">+ Nova Marmita</button>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi"><span class="muted">Marmitas</span><strong id="kpi-total">4</strong></div>
+              <div class="kpi"><span class="muted">Ativas</span><strong id="kpi-active" style="color:var(--green)">4</strong></div>
+              <div class="kpi"><span class="muted">Pedidos</span><strong id="kpi-orders">1</strong></div>
+              <div class="kpi"><span class="muted">Vendas</span><strong id="kpi-rev" style="color:var(--green)">R$ 26,90</strong></div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead><tr><th>ID</th><th>Prato</th><th>Categoria</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody id="admin-tbody"></tbody>
+              </table>
+            </div>
           </div>
-          <div style="overflow-x:auto;">
-            <table>
-              <thead>
-                <tr><th>ID</th><th>Marmita</th><th>Categoria</th><th>Preço</th><th>Status</th><th>Ações</th></tr>
-              </thead>
-              <tbody id="admin-tbody"></tbody>
-            </table>
-          </div>
-        </div>
 
-        <!-- TAB 5: EXCEL -->
-        <div id="tab-excel" class="tab-panel hidden">
-          <div class="flow-box" style="margin-top:0;margin-bottom:12px;background:#ECFDF5;border-color:#A7F3D0;">
-            <strong>Arquivo conectado:</strong> <code>server/data/marmitex_social.xlsx</code><br />
-            Todas as alterações feitas na aba Admin ou compras no Checkout aparecem imediatamente nas tabelas abaixo.
+          <!-- TELA 5: MODAL CADASTRO / EDIÇÃO DE MARMITA -->
+          <div id="tab-adminform" class="tab-panel hidden">
+            <div class="card" style="max-width:620px;margin:0 auto;">
+              <h2 id="form-title">Cadastrar Nova Marmita</h2>
+              <p class="muted" style="margin-bottom:12px;">As alterações são gravadas diretamente na aba <code>Marmitas</code> do Excel.</p>
+              <input type="hidden" id="edit-id" />
+              <div class="form-2col">
+                <div>
+                  <label style="font-size:11px;font-weight:700;">Nome da Marmita *</label>
+                  <input id="f-nome" placeholder="Ex: Parmegiana de Frango com Purê" />
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;">Categoria *</label>
+                  <select id="f-cat">
+                    <option>Tradicional</option>
+                    <option>Fitness & Low Carb</option>
+                    <option>Vegetariana & Vegana</option>
+                    <option>Executiva</option>
+                    <option>Gourmet</option>
+                    <option>Massas</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:10px;">
+                <label style="font-size:11px;font-weight:700;">Descrição do Prato *</label>
+                <textarea id="f-desc" rows="2" placeholder="Ingredientes e acompanhamentos..."></textarea>
+              </div>
+              <div class="form-2col" style="margin-top:10px;">
+                <div>
+                  <label style="font-size:11px;font-weight:700;">Gosto / Perfil de Sabor</label>
+                  <input id="f-gosto" placeholder="Ex: Caseiro, Bem Temperado" />
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;">Preço (R$) *</label>
+                  <input id="f-preco" type="number" step="0.01" placeholder="29.90" />
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;">Porção / Peso</label>
+                  <input id="f-tam" value="500g" />
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+                <button class="btn btn-soft" onclick="switchTab('admin')">Cancelar</button>
+                <button class="btn btn-green" onclick="saveAdminMarmita()">Salvar na Planilha Excel</button>
+              </div>
+            </div>
           </div>
-          <h3>Aba: Marmitas</h3>
-          <div style="overflow-x:auto;margin-bottom:16px;">
-            <table>
-              <thead class="excel-head">
-                <tr><th>id</th><th>nome</th><th>categoria</th><th>gosto</th><th>preco</th><th>disponivel</th></tr>
-              </thead>
-              <tbody id="excel-marmitas"></tbody>
-            </table>
+
+          <!-- TELA 6: ADMIN PEDIDOS -->
+          <div id="tab-orders" class="tab-panel hidden">
+            <h2>Pedidos Recebidos</h2>
+            <p class="muted" style="margin-bottom:12px;">Acompanhe os pedidos e atualize o status salvo na aba <code>Pedidos</code> do Excel.</p>
+            <div id="orders-list" style="display:flex;flex-direction:column;gap:10px;"></div>
           </div>
-          <h3>Aba: Pedidos</h3>
-          <div style="overflow-x:auto;">
-            <table>
-              <thead class="excel-head">
-                <tr><th>id</th><th>clienteNome</th><th>itensResumo</th><th>total</th><th>status</th></tr>
-              </thead>
-              <tbody id="excel-pedidos"></tbody>
-            </table>
+
+          <!-- TELA 7: PLANILHA EXCEL -->
+          <div id="tab-excel" class="tab-panel hidden">
+            <div class="flow-box" style="margin-top:0;margin-bottom:12px;background:#ECFDF5;border-color:#A7F3D0;">
+              <strong>Arquivo físico:</strong> <code>server/data/marmitex_social.xlsx</code> — Aba <strong>Marmitas</strong> e Aba <strong>Pedidos</strong> sincronizadas em tempo real.
+            </div>
+            <h3>Aba: Marmitas</h3>
+            <div style="overflow-x:auto;margin-bottom:14px;">
+              <table>
+                <thead class="excel-head"><tr><th>id</th><th>nome</th><th>categoria</th><th>gosto</th><th>preco</th><th>disponivel</th></tr></thead>
+                <tbody id="excel-marmitas"></tbody>
+              </table>
+            </div>
+            <h3>Aba: Pedidos</h3>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead class="excel-head"><tr><th>id</th><th>clienteNome</th><th>itensResumo</th><th>total</th><th>status</th></tr></thead>
+                <tbody id="excel-pedidos"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- SIDEBAR -->
+      <!-- SIDEBAR DE ANOTAÇÕES UX -->
       <aside style="display:flex;flex-direction:column;gap:14px;">
         <div class="card">
           <h3 id="side-title">Diretrizes desta Tela</h3>
           <p class="muted" id="side-desc"></p>
-          <ul id="side-list" style="padding-left:18px;margin:10px 0 0;font-size:12px;color:var(--text);"></ul>
+          <ul id="side-list" style="padding-left:18px;margin:10px 0 0;font-size:12px;"></ul>
         </div>
         <div class="card">
-          <h3>Fluxo Completo até o Excel</h3>
-          <div class="flow-box"><strong>1. Interface React</strong><br />Usuário ou Admin executa ação visual.</div>
-          <div class="flow-box"><strong>2. Proxy Vite → API Node.js</strong><br />Requisição chega em <code>127.0.0.1:3001/api</code>.</div>
-          <div class="flow-box"><strong>3. ExcelJS + Write Lock</strong><br />Atualiza <code>marmitex_social.xlsx</code> com segurança.</div>
+          <h3>Navegação Rápida</h3>
+          <div class="flow-box"><strong>URL Cliente:</strong> <code>http://localhost:5173/#/</code></div>
+          <div class="flow-box"><strong>URL Admin:</strong> <code>http://localhost:5173/#/admin</code></div>
+          <div class="flow-box"><strong>API Health:</strong> <code>http://localhost:3001/api/health</code></div>
         </div>
       </aside>
     </div>
@@ -391,66 +399,60 @@
     const state = {
       activeTab: 'store',
       activeCat: 'Todas',
+      modalDishId: 'MARM-103',
       modalQty: 1,
       marmitas: [
-        { id: 'MARM-101', nome: 'Feijoada Completa Tradicional', cat: 'Tradicional', gosto: 'Caseiro, Bem Temperado', preco: 26.9, disponivel: true },
-        { id: 'MARM-102', nome: 'Frango Grelhado Fitness', cat: 'Fitness & Low Carb', gosto: 'Leve, Rico em Proteína', preco: 23.9, disponivel: true },
-        { id: 'MARM-103', nome: 'Salmão ao Molho de Maracujá', cat: 'Gourmet', gosto: 'Agridoce, Sofisticado', preco: 39.9, disponivel: true },
-        { id: 'MARM-104', nome: 'Bowl Vegano Mediterrâneo', cat: 'Vegetariana & Vegana', gosto: 'Leve, Sem Lactose', preco: 29.9, disponivel: true }
+        { id: 'MARM-101', nome: 'Feijoada Completa Tradicional', cat: 'Tradicional', gosto: 'Caseiro, Bem Temperado', preco: 26.9, tam: '550g', img: '../client/public/images/marmitas/feijoada.jpg', promo: '-19% OFF', disponivel: true },
+        { id: 'MARM-102', nome: 'Frango Grelhado Fitness', cat: 'Fitness & Low Carb', gosto: 'Leve, Rico em Proteína', preco: 23.9, tam: '450g', img: '../client/public/images/marmitas/fitness-frango.jpg', promo: '-14% OFF', disponivel: true },
+        { id: 'MARM-103', nome: 'Salmão ao Molho de Maracujá', cat: 'Gourmet', gosto: 'Agridoce, Sofisticado', preco: 39.9, tam: '480g', img: '../client/public/images/marmitas/salmao-gourmet.jpg', promo: '-15% OFF', disponivel: true },
+        { id: 'MARM-104', nome: 'Bowl Vegano Mediterrâneo', cat: 'Vegetariana & Vegana', gosto: 'Leve, Sem Lactose', preco: 29.9, tam: '480g', img: '../client/public/images/marmitas/bowl-vegano.jpg', promo: '', disponivel: true }
       ],
       cart: [{ id: 'MARM-101', nome: 'Feijoada Completa Tradicional', preco: 26.9, qty: 1, obs: '' }],
       pedidos: [
-        { id: 'PED-1001', cliente: 'Mariana Oliveira', resumo: '1x Feijoada Completa Tradicional', total: 26.9, status: 'Em Preparo' }
+        { id: 'PED-1001', cliente: 'Mariana Oliveira', tel: '(11) 98765-4321', end: 'Rua Augusta, 1420', pag: 'Pix', resumo: '1x Feijoada Completa Tradicional', total: 26.9, status: 'Em Preparo' }
       ]
     };
 
     const meta = {
-      store: {
-        url: 'http://localhost:5173/#/',
-        title: '1. Cardápio e Descoberta (Visão Cliente)',
-        desc: 'Fundo claro suave (#FFFBF5) facilita a leitura dos pratos; laranja (#EA580C) estimula o apetite; verde (#16A34A) destaca o botão Comprar.',
-        bullets: ['Filtros combináveis por categoria e gosto', 'Preços destacados com botão verde imediato', 'Clique em Comprar adiciona na hora à sacola']
-      },
-      modal: {
-        url: 'http://localhost:5173/#/ (Modal do Prato)',
-        title: '2. Detalhes e Personalização',
-        desc: 'Permite conferir peso, tempo e calorias e adicionar observações antes de enviar à sacola.',
-        bullets: ['Controle simples de quantidade (+/-)', 'Campo livre de observações do prato', 'Redireciona para finalizar compra sem atrito']
-      },
-      checkout: {
-        url: 'http://localhost:5173/#/ (Sacola Lateral)',
-        title: '3. Sacola e Compra em 1 Passo',
-        desc: 'Checkout direto em uma única etapa, gerando um código PED-XXXX gravado na aba Pedidos da planilha Excel.',
-        bullets: ['Sem cadastro prévio obrigatório', 'Seleção de Pix, Cartão, VR ou Dinheiro', 'Confirmação instantânea e registro no Excel']
-      },
-      admin: {
-        url: 'http://localhost:5173/#/admin',
-        title: '4. Painel do Administrador (CRUD)',
-        desc: 'Teste aqui mesmo cadastrar, editar, pausar/ativar ou excluir marmitas — e veja o reflexo imediato na aba Planilha Excel e na Loja!',
-        bullets: ['Cadastro e edição de todas as informações', 'Alternância rápida Disponível / Pausada', 'Exclusão com remoção direta da planilha']
-      },
-      excel: {
-        url: 'http://localhost:5173/#/admin (Planilha Excel)',
-        title: '5. Planilha Excel (.xlsx) Sincronizada',
-        desc: 'Espelho em tempo real das abas Marmitas e Pedidos gravadas em server/data/marmitex_social.xlsx.',
-        bullets: ['Aba Marmitas atualizada a cada CRUD', 'Aba Pedidos atualizada a cada compra', 'Download e recarga manual disponíveis no app']
-      }
+      store: { title: 'Tela 1: Cardápio (Visão Cliente)', desc: 'Fundo claro suave (#FFFBF5) facilita a leitura dos pratos; laranja (#EA580C) desperta o apetite; verde (#16A34A) direciona ao botão Comprar.', bullets: ['Clique na foto para abrir a Tela 2 (Detalhes)', 'Clique em Comprar para somar na sacola', 'Alterne Desktop/Celular no topo direito'] },
+      modal: { title: 'Tela 2: Modal Detalhes do Prato', desc: 'Apresenta foto ampliada, porção, tempo de preparo, calorias e campo opcional de observação.', bullets: ['Controle de quantidade (- / +)', 'Campo livre de observações', 'Adiciona direto para o Checkout'] },
+      checkout: { title: 'Tela 3: Sacola & Checkout 1-Passo', desc: 'Sem cadastro obrigatório: revise itens, preencha entrega e confirme em um único fluxo.', bullets: ['Frete Grátis destacado', 'Gera código PED-XXXX na aba Pedidos', 'Confirmação imediata na tela'] },
+      admin: { title: 'Tela 4: Admin — Gerenciar Marmitas', desc: 'Dashboard com KPIs em tempo real e tabela CRUD completa conectada ao Excel.', bullets: ['Clique em + Nova Marmita ou Editar para abrir a Tela 5', 'Alterne Disponível/Pausada com 1 clique', 'Exclusão imediata da planilha'] },
+      adminform: { title: 'Tela 5: Modal Cadastro / Edição', desc: 'Formulário completo para criar novas marmitas ou editar pratos existentes.', bullets: ['Suporta tags de gosto e categoria', 'Define preço base e porção', 'Salva direto na aba Marmitas do Excel'] },
+      orders: { title: 'Tela 6: Admin — Pedidos Recebidos', desc: 'Lista todos os pedidos da aba Pedidos e permite atualizar o status da entrega.', bullets: ['Mostra cliente, telefone, endereço e itens', 'Alteração de status sincronizada com o Excel', 'Reflete novos pedidos feitos na Tela 3'] },
+      excel: { title: 'Tela 7: Planilha Excel (.xlsx)', desc: 'Visualização tabular fiel às abas Marmitas e Pedidos gravadas em server/data/marmitex_social.xlsx.', bullets: ['Atualizada após qualquer compra ou CRUD', 'Compatível com download .xlsx no app', 'Escrita segura com fila writeMutex'] }
     };
 
     const brl = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
+
+    function setDevice(mode) {
+      document.getElementById('viewport-shell').classList.toggle('mobile', mode === 'mobile');
+      document.getElementById('btn-desktop').classList.toggle('active', mode === 'desktop');
+      document.getElementById('btn-mobile').classList.toggle('active', mode === 'mobile');
+    }
 
     function switchTab(tab) {
       state.activeTab = tab;
       document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
       document.getElementById('tab-' + tab).classList.remove('hidden');
       document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
-
       const m = meta[tab];
-      document.getElementById('url-box').textContent = m.url;
       document.getElementById('side-title').textContent = m.title;
       document.getElementById('side-desc').textContent = m.desc;
       document.getElementById('side-list').innerHTML = m.bullets.map((x) => `<li>${x}</li>`).join('');
       renderAll();
+    }
+
+    function openDishModal(id) {
+      const d = state.marmitas.find((x) => x.id === id);
+      if (!d) return;
+      state.modalDishId = id;
+      state.modalQty = 1;
+      document.getElementById('modal-img').src = d.img;
+      document.getElementById('modal-cat').textContent = `${d.cat} • ${d.gosto}`;
+      document.getElementById('modal-name').textContent = d.nome;
+      document.getElementById('modal-qty').textContent = 1;
+      switchTab('modal');
     }
 
     function addCart(id, qty = 1, obs = '') {
@@ -459,6 +461,7 @@
       const found = state.cart.find((c) => c.id === id && c.obs === obs);
       if (found) found.qty += qty;
       else state.cart.push({ id: dish.id, nome: dish.nome, preco: dish.preco, qty, obs });
+      document.getElementById('order-feedback').classList.add('hidden');
       renderAll();
     }
 
@@ -468,23 +471,49 @@
     }
 
     function addModalToCart() {
-      const obs = document.getElementById('modal-obs').value.trim();
-      addCart('MARM-103', state.modalQty, obs);
+      addCart(state.modalDishId, state.modalQty, document.getElementById('modal-obs').value.trim());
       switchTab('checkout');
     }
 
     function placeDemoOrder() {
       if (state.cart.length === 0) return;
       const nome = document.getElementById('cli-nome').value.trim() || 'Cliente';
+      const tel = document.getElementById('cli-tel').value.trim() || '-';
+      const end = document.getElementById('cli-end').value.trim() || '-';
+      const pag = document.getElementById('cli-pag').value;
       const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
       const resumo = state.cart.map((i) => `${i.qty}x ${i.nome}`).join(', ');
       const newId = `PED-${1001 + state.pedidos.length}`;
-      state.pedidos.unshift({ id: newId, cliente: nome, resumo, total, status: 'Recebido' });
+      state.pedidos.unshift({ id: newId, cliente: nome, tel, end, pag, resumo, total, status: 'Recebido' });
       state.cart = [];
       const fb = document.getElementById('order-feedback');
       fb.textContent = `✓ Pedido ${newId} gravado na aba Pedidos da planilha Excel!`;
       fb.classList.remove('hidden');
       renderAll();
+    }
+
+    function openNewMarmitaForm() {
+      document.getElementById('edit-id').value = '';
+      document.getElementById('form-title').textContent = 'Cadastrar Nova Marmita';
+      document.getElementById('f-nome').value = '';
+      document.getElementById('f-desc').value = '';
+      document.getElementById('f-gosto').value = 'Caseiro';
+      document.getElementById('f-preco').value = '';
+      document.getElementById('f-tam').value = '500g';
+      switchTab('adminform');
+    }
+
+    function editAdmin(id) {
+      const m = state.marmitas.find((x) => x.id === id);
+      if (!m) return;
+      document.getElementById('edit-id').value = m.id;
+      document.getElementById('form-title').textContent = `Editar Marmita (${m.id})`;
+      document.getElementById('f-nome').value = m.nome;
+      document.getElementById('f-cat').value = m.cat;
+      document.getElementById('f-gosto').value = m.gosto;
+      document.getElementById('f-preco').value = m.preco;
+      document.getElementById('f-tam').value = m.tam || '500g';
+      switchTab('adminform');
     }
 
     function saveAdminMarmita() {
@@ -493,30 +522,22 @@
       const cat = document.getElementById('f-cat').value;
       const gosto = document.getElementById('f-gosto').value.trim() || 'Caseiro';
       const preco = Number(document.getElementById('f-preco').value);
+      const tam = document.getElementById('f-tam').value.trim() || '500g';
       if (!nome || !preco) return alert('Preencha nome e preço da marmita.');
 
       if (editId) {
         const item = state.marmitas.find((m) => m.id === editId);
-        if (item) Object.assign(item, { nome, cat, gosto, preco });
+        if (item) Object.assign(item, { nome, cat, gosto, preco, tam });
       } else {
-        const nextNum = 101 + state.marmitas.length;
-        state.marmitas.unshift({ id: `MARM-${nextNum}`, nome, cat, gosto, preco, disponivel: true });
+        state.marmitas.unshift({
+          id: `MARM-${101 + state.marmitas.length}`,
+          nome, cat, gosto, preco, tam,
+          img: '../client/public/images/marmitas/strogonoff.jpg',
+          promo: '',
+          disponivel: true
+        });
       }
-      document.getElementById('edit-id').value = '';
-      document.getElementById('f-nome').value = '';
-      document.getElementById('f-gosto').value = '';
-      document.getElementById('f-preco').value = '';
-      renderAll();
-    }
-
-    function editAdmin(id) {
-      const m = state.marmitas.find((x) => x.id === id);
-      if (!m) return;
-      document.getElementById('edit-id').value = m.id;
-      document.getElementById('f-nome').value = m.nome;
-      document.getElementById('f-cat').value = m.cat;
-      document.getElementById('f-gosto').value = m.gosto;
-      document.getElementById('f-preco').value = m.preco;
+      switchTab('admin');
     }
 
     function toggleAvail(id) {
@@ -530,10 +551,19 @@
       renderAll();
     }
 
+    function updateOrderStatus(id, status) {
+      const o = state.pedidos.find((p) => p.id === id);
+      if (o) o.status = status;
+      renderAll();
+    }
+
     function renderAll() {
       const count = state.cart.reduce((s, i) => s + i.qty, 0);
       const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
-      document.getElementById('cart-pill').textContent = `Sacola: ${count} ${count === 1 ? 'item' : 'itens'} (${brl(total)})`;
+      document.getElementById('top-cart-btn').textContent = count > 0 ? `Sacola (${count}) • ${brl(total)}` : 'Sacola (0)';
+      document.getElementById('floating-bar').classList.toggle('hidden', count === 0);
+      document.getElementById('floating-text').textContent = `${count} ${count === 1 ? 'item' : 'itens'} • Finalizar Pedido Agora`;
+      document.getElementById('floating-total').textContent = `${brl(total)} →`;
 
       const cats = ['Todas', 'Tradicional', 'Fitness & Low Carb', 'Vegetariana & Vegana', 'Gourmet'];
       document.getElementById('cat-pills').innerHTML = cats
@@ -541,23 +571,29 @@
         .join('');
 
       const visible = state.marmitas.filter((m) => m.disponivel && (state.activeCat === 'Todas' || m.cat === state.activeCat));
-      document.getElementById('store-grid').innerHTML = visible
-        .map((m) => `
-          <div class="dish-card">
+      document.getElementById('store-grid').innerHTML = visible.map((m) => `
+        <div class="dish-card">
+          <div class="dish-photo" onclick="openDishModal('${m.id}')">
+            <img src="${m.img}" onerror="this.style.display='none'" alt="${m.nome}" />
+            ${m.promo ? `<span class="promo-tag">${m.promo}</span>` : ''}
+            <span class="size-tag">${m.tam || '500g'}</span>
+          </div>
+          <div class="dish-body">
             <div>
               <span class="badge">${m.cat}</span>
-              <div style="font-weight:800;margin-top:6px;">${m.nome}</div>
-              <div class="muted" style="font-size:12px;">${m.gosto}</div>
+              <div style="font-weight:800;margin-top:4px;cursor:pointer;" onclick="openDishModal('${m.id}')">${m.nome}</div>
+              <div class="muted" style="font-size:11px;">${m.gosto}</div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px;border-top:1px solid var(--border);">
               <strong style="font-size:16px;">${brl(m.preco)}</strong>
               <button class="btn btn-green" onclick="addCart('${m.id}')">Comprar</button>
             </div>
           </div>
-        `).join('');
+        </div>
+      `).join('');
 
       document.getElementById('checkout-items').innerHTML = state.cart.length === 0
-        ? '<p class="muted">Sacola vazia. Adicione pratos na aba Cardápio.</p>'
+        ? '<p class="muted">Sacola vazia. Adicione pratos na Tela 1.</p>'
         : state.cart.map((c) => `
           <div class="flow-box" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;">
             <div><strong>${c.qty}x ${c.nome}</strong>${c.obs ? `<div class="muted">Obs: ${c.obs}</div>` : ''}</div>
@@ -566,18 +602,41 @@
         `).join('');
       document.getElementById('checkout-total').textContent = brl(total);
 
+      document.getElementById('kpi-total').textContent = state.marmitas.length;
+      document.getElementById('kpi-active').textContent = state.marmitas.filter((m) => m.disponivel).length;
+      document.getElementById('kpi-orders').textContent = state.pedidos.length;
+      document.getElementById('kpi-rev').textContent = brl(state.pedidos.reduce((s, p) => s + p.total, 0));
+
       document.getElementById('admin-tbody').innerHTML = state.marmitas.map((m) => `
         <tr>
           <td style="font-family:Consolas,monospace;">${m.id}</td>
           <td><strong>${m.nome}</strong></td>
           <td>${m.cat}</td>
           <td>${brl(m.preco)}</td>
-          <td><button class="${m.disponivel ? 'status-ok' : 'status-off'}" style="border:0;cursor:pointer;" onclick="toggleAvail('${m.id}')">${m.disponivel ? 'Disponível' : 'Pausada'}</button></td>
-          <td>
+          <td><button class="${m.disponivel ? 'status-ok' : 'status-off'}" onclick="toggleAvail('${m.id}')">${m.disponivel ? 'Disponível' : 'Pausada'}</button></td>
+          <td style="white-space:nowrap;">
             <button class="btn btn-soft" style="padding:4px 8px;" onclick="editAdmin('${m.id}')">Editar</button>
             <button class="btn btn-red" style="padding:4px 8px;" onclick="deleteAdmin('${m.id}')">Excluir</button>
           </td>
         </tr>
+      `).join('');
+
+      document.getElementById('orders-list').innerHTML = state.pedidos.map((p) => `
+        <div class="card" style="padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <span class="badge">${p.id}</span>
+              <strong style="margin-left:6px;">${p.cliente}</strong>
+              <div class="muted" style="font-size:12px;margin-top:4px;">${p.resumo} • ${p.end} (${p.pag})</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <strong style="color:var(--green);">${brl(p.total)}</strong>
+              <select style="width:auto;" onchange="updateOrderStatus('${p.id}', this.value)">
+                ${['Recebido','Em Preparo','Saiu para Entrega','Entregue','Cancelado'].map((st) => `<option ${p.status===st?'selected':''}>${st}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
       `).join('');
 
       document.getElementById('excel-marmitas').innerHTML = state.marmitas.map((m) => `

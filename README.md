@@ -130,10 +130,11 @@ npm run build
 
 ---
 
-## Prototipagem e Passo a Passo de Uso
+## Prototipagem, Passo a Passo e Deploy
 
 - **Guia completo e prototipagem em Markdown:** [`docs/PROTOTIPAGEM_E_GUIA_DE_USO.md`](docs/PROTOTIPAGEM_E_GUIA_DE_USO.md)
 - **Protótipo interativo clicável:** abra [`docs/prototipo.html`](docs/prototipo.html) diretamente no navegador.
+- **Deploy na Vercel (API e Frontend):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md)
 
 ---
 

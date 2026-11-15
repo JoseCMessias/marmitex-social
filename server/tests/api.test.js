@@ -32,6 +32,16 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
   });
 
   it('lists seeded marmitas, creates, edits, toggles, deletes, and records orders', async () => {
+    const rootRes = await fetch(`${baseUrl}/`);
+    assert.equal(rootRes.status, 200);
+    const rootCt = rootRes.headers.get('content-type') || '';
+    if (rootCt.includes('application/json')) {
+      const rootData = await rootRes.json();
+      assert.equal(rootData.status, 'ok');
+    } else {
+      assert.ok(rootCt.includes('text/html'), 'Expected HTML when client/dist is built');
+    }
+
     const healthRes = await fetch(`${baseUrl}/api/health`);
     assert.equal(healthRes.status, 200);
     const health = await healthRes.json();

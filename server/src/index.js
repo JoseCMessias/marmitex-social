@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
 import { ensureDatabase, getDbPath, getExcelSnapshot } from './db/excelDb.js';
-import { marmitasRouter } from './routes/marmitas.js';
+import { getUploadsDir, marmitasRouter } from './routes/marmitas.js';
 import { pedidosRouter } from './routes/pedidos.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,8 +16,7 @@ export function createApp() {
   app.use(cors());
   app.use(express.json({ limit: '2mb' }));
 
-  const uploadsDir = path.resolve(__dirname, '../uploads');
-  app.use('/uploads', express.static(uploadsDir));
+  app.use('/uploads', express.static(getUploadsDir()));
 
   app.get('/api/health', async (_req, res, next) => {
     try {
@@ -67,6 +66,15 @@ export function createApp() {
     } catch {
       return next();
     }
+  });
+
+  app.get('/', (_req, res) => {
+    res.json({
+      status: 'ok',
+      service: 'MarmitexSocial API',
+      database: process.env.VERCEL ? 'Excel (.xlsx em /tmp temporário)' : 'Excel (.xlsx)',
+      endpoints: ['/api/health', '/api/marmitas', '/api/pedidos', '/api/excel/snapshot'],
+    });
   });
 
   app.use((err, _req, res, _next) => {
