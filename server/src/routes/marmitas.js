@@ -278,6 +278,23 @@ marmitasRouter.post('/', requireAdminAuth, async (req, res, next) => {
   }
 });
 
+async function getBackupScheduleMetadata(id) {
+  const backupRestoreMinutes = Math.round(getMainDishBackupDelayMs() / 60000);
+  if (!isMainMarmita({ id })) {
+    return {
+      backupScheduled: false,
+      restaurarEm: null,
+      backupRestoreMinutes,
+    };
+  }
+  const backupEntry = await getBackupEntryById(id);
+  return {
+    backupScheduled: Boolean(backupEntry?.restaurarEm),
+    restaurarEm: backupEntry?.restaurarEm || null,
+    backupRestoreMinutes,
+  };
+}
+
 async function handleUpdate(req, res, next) {
   try {
     const existing = await getMarmitaById(req.params.id);
@@ -296,9 +313,14 @@ async function handleUpdate(req, res, next) {
 
     const payload = sanitizeMarmitaBody(req.body);
     const updated = await updateMarmita(req.params.id, payload);
+    const backupMeta = await getBackupScheduleMetadata(req.params.id);
+    const message = backupMeta.backupScheduled
+      ? `Marmita atualizada! O histórico original do backup será restaurado em ${backupMeta.backupRestoreMinutes} min.`
+      : 'Marmita atualizada na planilha Excel!';
     res.json({
       item: serializeMarmita(updated),
-      message: 'Marmita atualizada na planilha Excel!',
+      ...backupMeta,
+      message,
     });
   } catch (err) {
     next(err);
@@ -314,19 +336,14 @@ marmitasRouter.delete('/:id', requireAdminAuth, async (req, res, next) => {
     if (!deleted) {
       return res.status(404).json({ error: 'Marmita não encontrada na planilha.' });
     }
-    const isMain = isMainMarmita({ id: req.params.id });
-    const backupEntry = isMain ? await getBackupEntryById(req.params.id) : null;
-    const backupRestoreMinutes = Math.round(getMainDishBackupDelayMs() / 60000);
-    const message =
-      isMain && backupEntry?.restaurarEm
-        ? `Item principal removido. O backup reinserirá o mesmo item na planilha em ${backupRestoreMinutes} min.`
-        : 'Marmita removida da planilha Excel!';
+    const backupMeta = await getBackupScheduleMetadata(req.params.id);
+    const message = backupMeta.backupScheduled
+      ? `Item principal removido. O backup restaurará a versão original em ${backupMeta.backupRestoreMinutes} min.`
+      : 'Marmita removida da planilha Excel!';
     res.json({
       deleted: true,
       id: req.params.id,
-      backupScheduled: Boolean(isMain && backupEntry?.restaurarEm),
-      restaurarEm: backupEntry?.restaurarEm || null,
-      backupRestoreMinutes,
+      ...backupMeta,
       message,
     });
   } catch (err) {

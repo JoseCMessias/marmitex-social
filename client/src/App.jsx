@@ -323,6 +323,11 @@ export function App() {
     showToast('Sessão administrativa encerrada.');
   };
 
+  const refreshBackupStatus = useCallback(async () => {
+    const health = await api.getHealth().catch(() => null);
+    if (health?.backup) setBackupStatus(health.backup);
+  }, []);
+
   // Admin handlers
   const handleSaveMarmita = async (payload, id) => {
     if (id) {
@@ -334,6 +339,9 @@ export function App() {
           entry.marmita.id === id ? { ...entry, marmita: updated } : entry
         )
       );
+      if (!updated.temporario) {
+        await refreshBackupStatus();
+      }
       showToast(`"${updated.nome}" atualizada na planilha Excel!`);
     } else {
       const created = await api.createMarmita(payload);
@@ -346,6 +354,9 @@ export function App() {
     try {
       const updated = await api.patchMarmita(id, patch);
       setMarmitas((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      if (!updated.temporario) {
+        await refreshBackupStatus();
+      }
       showToast(`"${updated.nome}" atualizada!`);
     } catch (err) {
       showToast(err.message || 'Erro ao atualizar marmita.', 'error');
@@ -358,8 +369,7 @@ export function App() {
       setMarmitas((prev) => prev.filter((m) => m.id !== id));
       setCartItems((prev) => prev.filter((entry) => entry.marmita.id !== id));
       if (result?.backupScheduled) {
-        const health = await api.getHealth().catch(() => null);
-        if (health?.backup) setBackupStatus(health.backup);
+        await refreshBackupStatus();
       }
       showToast(result?.message || 'Marmita removida da planilha Excel!');
     } catch (err) {

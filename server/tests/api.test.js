@@ -233,13 +233,19 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(forceCleanup.deletedCount, 1);
     assert.deepEqual(forceCleanup.deletedIds, [tempDish.id]);
 
-    // Deleting a main menu item schedules a 10-minute backup restore of the exact same item
+    // Editing and then deleting a main menu item always recovers the original pre-edit backup
+    const origMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`);
+    assert.equal(origMainRes.status, 200);
+    const origMain = (await origMainRes.json()).item;
+
     const editMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
       method: 'PUT',
       headers: authHeaders,
-      body: JSON.stringify({ precoPromocional: 19.9 }),
+      body: JSON.stringify({ nome: 'Prato Alterado Temporariamente', precoPromocional: 19.9 }),
     });
     assert.equal(editMainRes.status, 200);
+    const editMainData = await editMainRes.json();
+    assert.equal(editMainData.backupScheduled, true);
 
     const delMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
       method: 'DELETE',
@@ -257,6 +263,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(backupStatusRes.status, 200);
     const backupStatusData = await backupStatusRes.json();
     assert.equal(backupStatusData.backup.pendingRestoreCount, 1);
+    assert.equal(backupStatusData.backup.pendingRestores[0].tipo, 'exclusao');
 
     const softRestoreRes = await fetch(`${baseUrl}/api/marmitas/backup/restore`, {
       method: 'POST',
@@ -277,7 +284,9 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
 
     const restoredMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`);
     assert.equal(restoredMainRes.status, 200);
-    assert.equal((await restoredMainRes.json()).item.precoPromocional, 19.9);
+    const restoredMain = (await restoredMainRes.json()).item;
+    assert.equal(restoredMain.nome, origMain.nome);
+    assert.equal(restoredMain.precoPromocional, origMain.precoPromocional);
 
     // Upload image via Multer 2.x (valid image + invalid mime rejection)
     const validForm = new FormData();

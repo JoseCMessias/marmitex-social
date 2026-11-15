@@ -179,37 +179,63 @@ describe('MarmitexSocial Excel Database CRUD', () => {
     stopScheduler();
   });
 
-  it('backs up existing main menu items and auto-restores deleted main items after 10 minutes', async () => {
-    const editedMain = await updateMarmita('MARM-102', {
-      nome: 'Frango Grelhado Customizado na Planilha',
-      preco: 29.5,
-    });
-    assert.equal(editedMain.nome, 'Frango Grelhado Customizado na Planilha');
+  it('keeps immutable pre-edit backup of existing menu and restores original history on edit or delete after 10 minutes', async () => {
+    const original102 = await getMarmitaById('MARM-102');
+    assert.ok(original102);
 
-    // Delete main menu item -> stays deleted for 10 minutes, snapshot kept in BackupCardapio
+    // 1. Editing a main item keeps BackupCardapio untouched and reverts edit after 10 minutes
+    const editedOnly = await updateMarmita('MARM-102', {
+      nome: 'Frango Temporariamente Editado',
+      preco: 99.0,
+    });
+    assert.equal(editedOnly.nome, 'Frango Temporariamente Editado');
+    assert.equal(editedOnly.preco, 99.0);
+
+    const backupAfterEdit = await getBackupEntryById('MARM-102');
+    assert.equal(backupAfterEdit.nome, original102.nome);
+    assert.equal(backupAfterEdit.preco, original102.preco);
+    assert.ok(backupAfterEdit.restaurarEm);
+
+    const editedMs = Date.parse(editedOnly.atualizadoEm);
+    const editAt5Min = await restoreDeletedMainMarmitas({ now: editedMs + 5 * 60 * 1000 });
+    assert.equal(editAt5Min.restoredCount, 0);
+    assert.equal((await getMarmitaById('MARM-102')).preco, 99.0);
+
+    const editAt10Min = await cleanupInsertedMarmitas({ now: editedMs + 10 * 60 * 1000 });
+    assert.equal(editAt10Min.restoredCount, 1);
+    assert.deepEqual(editAt10Min.restoredIds, ['MARM-102']);
+    const revertedAfterEdit = await getMarmitaById('MARM-102');
+    assert.equal(revertedAfterEdit.nome, original102.nome);
+    assert.equal(revertedAfterEdit.preco, original102.preco);
+
+    // 2. Editing and then deleting must restore pre-edit history (not the edited version) after 10 minutes
+    await updateMarmita('MARM-102', {
+      nome: 'Alterado Antes de Deletar',
+      preco: 88.0,
+    });
     const deleted = await deleteMarmita('MARM-102');
     assert.equal(deleted, true);
     assert.equal(await getMarmitaById('MARM-102'), null);
 
-    const backupEntry = await getBackupEntryById('MARM-102');
-    assert.ok(backupEntry);
-    assert.ok(backupEntry.deletadoEm);
-    assert.ok(backupEntry.restaurarEm);
-    assert.equal(backupEntry.nome, 'Frango Grelhado Customizado na Planilha');
+    const backupAfterDelete = await getBackupEntryById('MARM-102');
+    assert.ok(backupAfterDelete);
+    assert.ok(backupAfterDelete.deletadoEm);
+    assert.ok(backupAfterDelete.restaurarEm);
+    assert.equal(backupAfterDelete.nome, original102.nome);
+    assert.equal(backupAfterDelete.preco, original102.preco);
 
     const summary = await getBackupSummary();
     assert.equal(summary.pendingRestoreCount, 1);
     assert.equal(summary.pendingRestores[0].id, 'MARM-102');
+    assert.equal(summary.pendingRestores[0].tipo, 'exclusao');
 
-    // At 5 minutes it is NOT restored yet
-    const deletedMs = Date.parse(backupEntry.deletadoEm);
+    const deletedMs = Date.parse(backupAfterDelete.deletadoEm);
     const at5Min = await restoreDeletedMainMarmitas({
       now: deletedMs + 5 * 60 * 1000,
     });
     assert.equal(at5Min.restoredCount, 0);
     assert.equal(await getMarmitaById('MARM-102'), null);
 
-    // At 10 minutes it IS automatically re-inserted with the exact same edited values
     const at10Min = await cleanupInsertedMarmitas({
       now: deletedMs + 10 * 60 * 1000,
     });
@@ -218,20 +244,22 @@ describe('MarmitexSocial Excel Database CRUD', () => {
 
     const restored = await getMarmitaById('MARM-102');
     assert.ok(restored);
-    assert.equal(restored.nome, 'Frango Grelhado Customizado na Planilha');
-    assert.equal(restored.preco, 29.5);
+    assert.equal(restored.nome, original102.nome);
+    assert.equal(restored.preco, original102.preco);
 
     const summaryAfter = await getBackupSummary();
     assert.equal(summaryAfter.pendingRestoreCount, 0);
 
-    // Migrating a legacy 2-sheet workbook (without BackupCardapio) creates BackupCardapio and preserves values
+    // 3. Migrating a legacy 2-sheet workbook captures current spreadsheet items as the permanent backup
+    await updateMarmita('MARM-103', { precoPromocional: 29.9 });
     const legacyWb = new ExcelJS.Workbook();
     await legacyWb.xlsx.readFile(testExcelPath);
     legacyWb.removeWorksheet(BACKUP_SHEET_NAME);
     await legacyWb.xlsx.writeFile(testExcelPath);
 
     const migratedList = await listMarmitas();
-    assert.ok(migratedList.some((m) => m.id === 'MARM-102' && m.preco === 29.5));
+    assert.ok(migratedList.some((m) => m.id === 'MARM-103' && m.precoPromocional === 29.9));
+    assert.equal((await getBackupEntryById('MARM-103')).precoPromocional, 29.9);
 
     const migratedWb = new ExcelJS.Workbook();
     await migratedWb.xlsx.readFile(testExcelPath);

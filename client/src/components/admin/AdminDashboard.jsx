@@ -328,10 +328,11 @@ export function AdminDashboard({
             <span>
               <strong>
                 Backup automático ({backupIntervalMinutes} min): {pendingRestores.length} item(ns)
-                principal(is) deletado(s)
+                principal(is) alterado(s)/removido(s)
               </strong>{' '}
-              ({pendingRestores.map((item) => item.nome).join(', ')}) será(ão) reinserido(s)
-              automaticamente na planilha em até {backupIntervalMinutes} minutos.
+              ({pendingRestores.map((item) => `${item.nome} [${item.tipo === 'exclusao' ? 'excluído' : 'editado'}]`).join(', ')})
+              será(ão) restaurado(s) ao histórico original do backup em até {backupIntervalMinutes}{' '}
+              minutos.
             </span>
           </div>
           {onRestoreBackup && (
