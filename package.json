@@ -1,0 +1,17 @@
+{
+  "name": "marmitex-social",
+  "version": "1.0.0",
+  "description": "MarmitexSocial - App de entrega de marmitas com React, Vite, Node.js e banco de dados em Excel",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "dev": "concurrently -n \"API,WEB\" -c \"yellow,green\" \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "start": "npm --prefix server start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

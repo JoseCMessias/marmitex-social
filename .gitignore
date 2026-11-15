@@ -1,0 +1,51 @@
+# Dependências Node.js
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build do frontend (Vite) e arquivos temporários
+dist/
+client/dist/
+dist-ssr/
+.vite/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Base de dados Excel em runtime, arquivos temporários e travas do Microsoft Excel
+server/data/*.xlsx
+server/data/*.tmp.xlsx
+~$*.xlsx
+!server/data/.gitkeep
+
+# Imagens enviadas pelo administrador em runtime
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Cobertura de testes
+coverage/
+
+# Editores / IDEs
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional (Windows / macOS)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+.DS_Store
