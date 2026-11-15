@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
+import { requireAdminAuth } from './auth/adminAuth.js';
 import {
   cleanupInsertedMarmitas,
   ensureDatabase,
@@ -15,6 +16,7 @@ import {
   readBlobBuffer,
   startInsertedDishCleanupScheduler,
 } from './db/excelDb.js';
+import { adminRouter } from './routes/admin.js';
 import { getUploadsDir, marmitasRouter } from './routes/marmitas.js';
 import { pedidosRouter } from './routes/pedidos.js';
 
@@ -83,10 +85,11 @@ export function createApp() {
     }
   });
 
+  app.use('/api/admin', adminRouter);
   app.use('/api/marmitas', marmitasRouter);
   app.use('/api/pedidos', pedidosRouter);
 
-  app.get('/api/excel/snapshot', async (_req, res, next) => {
+  app.get('/api/excel/snapshot', requireAdminAuth, async (_req, res, next) => {
     try {
       const snapshot = await getExcelSnapshot();
       res.json(snapshot);
@@ -95,7 +98,7 @@ export function createApp() {
     }
   });
 
-  app.get('/api/excel/download', async (_req, res, next) => {
+  app.get('/api/excel/download', requireAdminAuth, async (_req, res, next) => {
     try {
       const buffer = await getExcelFileBuffer();
       res.setHeader(
@@ -131,6 +134,8 @@ export function createApp() {
     insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
     endpoints: [
       '/api/health',
+      '/api/admin/login',
+      '/api/admin/session',
       '/api/marmitas',
       '/api/marmitas/cleanup',
       '/api/pedidos',

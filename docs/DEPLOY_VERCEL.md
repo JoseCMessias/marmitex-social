@@ -37,6 +37,14 @@ Todos os três pontos já foram corrigidos:
   - **Localmente:** um agendador (`setInterval` a cada 10 minutos) executa a limpeza ativa em segundo plano.
   - **Na Vercel (plano Hobby):** a limpeza ocorre automaticamente a cada requisição após os 10 minutos, e também há o endpoint `GET/POST /api/marmitas/cleanup` (além de `/api/cron/cleanup` e do botão **"Limpar Inseridos Agora"** no painel Admin).
 
+### Acesso ao Painel Administrativo (Login)
+
+- A rota `#/admin` exibe uma tela de login obrigatória e protege os endpoints administrativos da API (`POST/PUT/PATCH/DELETE /api/marmitas`, `GET /api/pedidos`, `PATCH /api/pedidos/:id/status`, `/api/marmitas/cleanup`, `/api/excel/snapshot` e `/api/excel/download`).
+- Credenciais padrão configuradas no servidor:
+  - **Login:** `admin`
+  - **Senha:** `admin123`
+- *(Opcional)* Para alterar em produção na Vercel, defina as variáveis de ambiente `ADMIN_USERNAME`, `ADMIN_PASSWORD` e `ADMIN_AUTH_SECRET` no projeto da API e faça **Redeploy**.
+
 ---
 
 ## Passo a Passo: Deploy da API (`server/`) na Vercel

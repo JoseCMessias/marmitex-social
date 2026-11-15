@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import multer from 'multer';
+import { requireAdminAuth } from '../auth/adminAuth.js';
 import {
   cleanupInsertedMarmitas,
   createMarmita,
@@ -188,8 +189,8 @@ async function handleCleanup(req, res, next) {
   }
 }
 
-marmitasRouter.get('/cleanup', handleCleanup);
-marmitasRouter.post('/cleanup', handleCleanup);
+marmitasRouter.get('/cleanup', requireAdminAuth, handleCleanup);
+marmitasRouter.post('/cleanup', requireAdminAuth, handleCleanup);
 
 marmitasRouter.get('/:id', async (req, res, next) => {
   try {
@@ -203,7 +204,7 @@ marmitasRouter.get('/:id', async (req, res, next) => {
   }
 });
 
-marmitasRouter.post('/upload', uploadSingleImage, async (req, res, next) => {
+marmitasRouter.post('/upload', requireAdminAuth, uploadSingleImage, async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Nenhuma imagem foi enviada.' });
@@ -225,7 +226,7 @@ marmitasRouter.post('/upload', uploadSingleImage, async (req, res, next) => {
   }
 });
 
-marmitasRouter.post('/', async (req, res, next) => {
+marmitasRouter.post('/', requireAdminAuth, async (req, res, next) => {
   try {
     const errors = validateMarmitaPayload(req.body, false);
     if (errors.length > 0) {
@@ -270,10 +271,10 @@ async function handleUpdate(req, res, next) {
   }
 }
 
-marmitasRouter.put('/:id', handleUpdate);
-marmitasRouter.patch('/:id', handleUpdate);
+marmitasRouter.put('/:id', requireAdminAuth, handleUpdate);
+marmitasRouter.patch('/:id', requireAdminAuth, handleUpdate);
 
-marmitasRouter.delete('/:id', async (req, res, next) => {
+marmitasRouter.delete('/:id', requireAdminAuth, async (req, res, next) => {
   try {
     const deleted = await deleteMarmita(req.params.id);
     if (!deleted) {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, ShoppingBag, UtensilsCrossed } from 'lucide-react';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminLogin } from './components/admin/AdminLogin';
 import { CartDrawer } from './components/customer/CartDrawer';
 import { FilterBar } from './components/customer/FilterBar';
 import { HeroBanner } from './components/customer/HeroBanner';
@@ -25,6 +26,8 @@ export function App() {
   const [ttlMinutes, setTtlMinutes] = useState(10);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [adminUser, setAdminUser] = useState(null);
+  const [adminChecking, setAdminChecking] = useState(() => api.hasAdminToken());
 
   // Customer filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,6 +82,15 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    api.setUnauthorizedHandler(() => {
+      setAdminUser(null);
+      setPedidos([]);
+      showToast('Sua sessão administrativa expirou. Faça login novamente.', 'error');
+    });
+    return () => api.setUnauthorizedHandler(null);
+  }, [showToast]);
+
   const loadAllData = useCallback(async () => {
     setLoading(true);
     setLoadError('');
@@ -86,23 +98,35 @@ export function App() {
     const maxAttempts = 5;
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        const [marmitasList, pedidosList, healthInfo] = await Promise.all([
+        const [marmitasList, healthInfo, sessionUser] = await Promise.all([
           api.listMarmitas(),
-          api.listPedidos(),
           api.getHealth().catch(() => null),
+          api.verifyAdminSession(),
         ]);
+
         setMarmitas(marmitasList);
-        setPedidos(pedidosList);
+        setAdminUser(sessionUser);
+        setAdminChecking(false);
+
         if (healthInfo?.persistence) {
           setPersistence(healthInfo.persistence);
         }
         if (Number.isFinite(Number(healthInfo?.insertedDishTtlMinutes))) {
           setTtlMinutes(Number(healthInfo.insertedDishTtlMinutes));
         }
+
+        if (sessionUser) {
+          const pedidosList = await api.listPedidos();
+          setPedidos(pedidosList);
+        } else {
+          setPedidos([]);
+        }
+
         setLoading(false);
         return;
       } catch (err) {
         if (attempt === maxAttempts) {
+          setAdminChecking(false);
           setLoadError(
             err.message ||
               'Não foi possível carregar o cardápio. Verifique se o servidor Node.js está rodando.'
@@ -243,13 +267,40 @@ export function App() {
     setSubmittingOrder(true);
     try {
       const created = await api.createPedido(orderPayload);
-      setPedidos((prev) => [created, ...prev]);
+      setPedidos((prev) => (adminUser ? [created, ...prev] : prev));
       setCartItems([]);
       setConfirmedOrder(created);
       showToast(`Pedido ${created.id} confirmado com sucesso!`);
     } finally {
       setSubmittingOrder(false);
     }
+  };
+
+  // Admin auth handlers
+  const handleAdminLogin = async ({ username, password, remember }) => {
+    const user = await api.loginAdmin({ username, password, remember });
+    setAdminUser(user);
+    const [marmitasList, pedidosList, healthInfo] = await Promise.all([
+      api.listMarmitas(),
+      api.listPedidos(),
+      api.getHealth().catch(() => null),
+    ]);
+    setMarmitas(marmitasList);
+    setPedidos(pedidosList);
+    if (healthInfo?.persistence) {
+      setPersistence(healthInfo.persistence);
+    }
+    if (Number.isFinite(Number(healthInfo?.insertedDishTtlMinutes))) {
+      setTtlMinutes(Number(healthInfo.insertedDishTtlMinutes));
+    }
+    showToast(`Bem-vindo ao painel, ${user.username}!`);
+  };
+
+  const handleAdminLogout = async () => {
+    await api.logoutAdmin();
+    setAdminUser(null);
+    setPedidos([]);
+    showToast('Sessão administrativa encerrada.');
   };
 
   // Admin handlers
@@ -331,6 +382,7 @@ export function App() {
       <Header
         activeView={activeView}
         onChangeView={handleChangeView}
+        isAdminAuthenticated={Boolean(adminUser)}
         cartCount={cartCount}
         cartTotal={cartTotal}
         onOpenCart={() => setCartOpen(true)}
@@ -359,18 +411,35 @@ export function App() {
             </button>
           </div>
         ) : activeView === 'admin' ? (
-          <AdminDashboard
-            marmitas={marmitas}
-            pedidos={pedidos}
-            persistence={persistence}
-            ttlMinutes={ttlMinutes}
-            onSaveMarmita={handleSaveMarmita}
-            onToggleField={handleToggleMarmitaField}
-            onDeleteMarmita={handleDeleteMarmita}
-            onCleanupInserted={handleCleanupInsertedMarmitas}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
-            onRefreshAll={loadAllData}
-          />
+          adminChecking ? (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-orange-100 bg-white px-5 py-16 text-center sm:py-20">
+              <RefreshCw className="h-8 w-8 animate-spin text-orange-600" />
+              <p className="mt-3 font-display text-base font-bold text-stone-800 sm:text-lg">
+                Verificando sessão administrativa...
+              </p>
+            </div>
+          ) : !adminUser ? (
+            <AdminLogin
+              onLogin={handleAdminLogin}
+              onBackToCustomer={() => handleChangeView('customer')}
+            />
+          ) : (
+            <AdminDashboard
+              marmitas={marmitas}
+              pedidos={pedidos}
+              persistence={persistence}
+              ttlMinutes={ttlMinutes}
+              adminUser={adminUser}
+              onSaveMarmita={handleSaveMarmita}
+              onToggleField={handleToggleMarmitaField}
+              onDeleteMarmita={handleDeleteMarmita}
+              onCleanupInserted={handleCleanupInsertedMarmitas}
+              onUpdateOrderStatus={handleUpdateOrderStatus}
+              onRefreshAll={loadAllData}
+              onLogout={handleAdminLogout}
+              onShowToast={showToast}
+            />
+          )
         ) : (
           <div className="space-y-6">
             <HeroBanner

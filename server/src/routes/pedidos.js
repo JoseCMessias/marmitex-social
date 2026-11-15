@@ -1,4 +1,5 @@
 import express from 'express';
+import { requireAdminAuth } from '../auth/adminAuth.js';
 import { createPedido, listPedidos, updatePedidoStatus } from '../db/excelDb.js';
 
 const VALID_STATUSES = [
@@ -11,7 +12,7 @@ const VALID_STATUSES = [
 
 export const pedidosRouter = express.Router();
 
-pedidosRouter.get('/', async (_req, res, next) => {
+pedidosRouter.get('/', requireAdminAuth, async (_req, res, next) => {
   try {
     const items = await listPedidos();
     res.json({ items });
@@ -58,7 +59,7 @@ pedidosRouter.post('/', async (req, res, next) => {
   }
 });
 
-pedidosRouter.patch('/:id/status', async (req, res, next) => {
+pedidosRouter.patch('/:id/status', requireAdminAuth, async (req, res, next) => {
   try {
     const { status } = req.body;
     if (!VALID_STATUSES.includes(status)) {

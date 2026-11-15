@@ -1,9 +1,10 @@
-import { UtensilsCrossed, ShoppingBag, ShieldCheck, Store, Clock } from 'lucide-react';
+import { UtensilsCrossed, ShoppingBag, ShieldCheck, Store, Clock, Lock } from 'lucide-react';
 import { formatBRL } from '../utils/format';
 
 export function Header({
   activeView,
   onChangeView,
+  isAdminAuthenticated = false,
   cartCount,
   cartTotal,
   onOpenCart,
@@ -69,7 +70,11 @@ export function Header({
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {isAdminAuthenticated ? (
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 sm:h-4 sm:w-4" />
+              ) : (
+                <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              )}
               <span>Admin</span>
             </button>
           </nav>

@@ -6,14 +6,31 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
   const [snapshot, setSnapshot] = useState(null);
   const [activeSheet, setActiveSheet] = useState('Marmitas');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   const loadSnapshot = async () => {
     setLoading(true);
+    setError('');
     try {
       const data = await api.getExcelSnapshot();
       setSnapshot(data);
+    } catch (err) {
+      setError(err.message || 'Não foi possível ler a planilha Excel.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError('');
+    try {
+      await api.downloadExcel();
+    } catch (err) {
+      setError(err.message || 'Não foi possível baixar a planilha.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -64,16 +81,23 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
             <span>Ler Planilha</span>
           </button>
 
-          <a
-            href={api.getExcelDownloadUrl()}
-            download="marmitex_social.xlsx"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:bg-emerald-700 sm:px-4"
+          <button
+            type="button"
+            disabled={downloading}
+            onClick={handleDownload}
+            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60 sm:px-4"
           >
             <Download className="h-4 w-4 shrink-0" />
-            <span>Baixar .xlsx</span>
-          </a>
+            <span>{downloading ? 'Baixando...' : 'Baixar .xlsx'}</span>
+          </button>
         </div>
       </div>
+
+      {error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-800 sm:text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Sheet Tabs */}
       <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">

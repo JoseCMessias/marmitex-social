@@ -8,6 +8,7 @@ import {
   Download,
   Edit3,
   FileSpreadsheet,
+  LogOut,
   Package,
   PauseCircle,
   Plus,
@@ -32,12 +33,15 @@ export function AdminDashboard({
   pedidos,
   persistence,
   ttlMinutes = 10,
+  adminUser,
   onSaveMarmita,
   onToggleField,
   onDeleteMarmita,
   onCleanupInserted,
   onUpdateOrderStatus,
   onRefreshAll,
+  onLogout,
+  onShowToast,
 }) {
   const [activeTab, setActiveTab] = useState('marmitas');
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +51,7 @@ export function AdminDashboard({
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
+  const [downloadingExcel, setDownloadingExcel] = useState(false);
   const [excelRefreshKey, setExcelRefreshKey] = useState(0);
 
   const filteredMarmitas = marmitas.filter((item) => {
@@ -115,6 +120,19 @@ export function AdminDashboard({
       setExcelRefreshKey((k) => k + 1);
     } finally {
       setCleaningUp(false);
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    setDownloadingExcel(true);
+    try {
+      await api.downloadExcel();
+    } catch (err) {
+      if (onShowToast) {
+        onShowToast(err.message || 'Erro ao baixar planilha Excel.', 'error');
+      }
+    } finally {
+      setDownloadingExcel(false);
     }
   };
 
@@ -238,15 +256,16 @@ export function AdminDashboard({
           </p>
         </div>
 
-        <div className="grid w-full grid-cols-2 gap-2.5 sm:flex sm:w-auto sm:items-center">
-          <a
-            href={api.getExcelDownloadUrl()}
-            download="marmitex_social.xlsx"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs font-bold text-stone-800 transition hover:bg-stone-100 sm:px-4 sm:text-sm"
+        <div className="grid w-full grid-cols-2 gap-2.5 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <button
+            type="button"
+            disabled={downloadingExcel}
+            onClick={handleDownloadExcel}
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs font-bold text-stone-800 transition hover:bg-stone-100 disabled:opacity-60 sm:px-4 sm:text-sm"
           >
             <Download className="h-4 w-4 shrink-0 text-emerald-600" />
-            <span>Baixar Excel</span>
-          </a>
+            <span>{downloadingExcel ? 'Baixando...' : 'Baixar Excel'}</span>
+          </button>
 
           <button
             type="button"
@@ -256,6 +275,18 @@ export function AdminDashboard({
             <Plus className="h-4 w-4 shrink-0" />
             <span>Nova Marmita</span>
           </button>
+
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              title={adminUser?.username ? `Sair (${adminUser.username})` : 'Sair do painel admin'}
+              className="col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-xs font-bold text-stone-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 sm:col-span-1 sm:px-4 sm:text-sm"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Sair{adminUser?.username ? ` (${adminUser.username})` : ''}</span>
+            </button>
+          )}
         </div>
       </div>
 

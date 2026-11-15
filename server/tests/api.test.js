@@ -55,10 +55,56 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const listData = await listRes.json();
     assert.ok(listData.items.length >= 8);
 
-    // Create new marmita
-    const createRes = await fetch(`${baseUrl}/api/marmitas`, {
+    // Protected admin endpoints reject unauthenticated access
+    const unauthPedidosRes = await fetch(`${baseUrl}/api/pedidos`);
+    assert.equal(unauthPedidosRes.status, 401);
+    const unauthSnapRes = await fetch(`${baseUrl}/api/excel/snapshot`);
+    assert.equal(unauthSnapRes.status, 401);
+    const unauthDownloadRes = await fetch(`${baseUrl}/api/excel/download`);
+    assert.equal(unauthDownloadRes.status, 401);
+    const unauthCreateRes = await fetch(`${baseUrl}/api/marmitas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome: 'Bloqueado', descricao: 'Sem token', categoria: 'Tradicional', preco: 30 }),
+    });
+    assert.equal(unauthCreateRes.status, 401);
+
+    // Invalid login attempts
+    const badLoginRes = await fetch(`${baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'wrong' }),
+    });
+    assert.equal(badLoginRes.status, 401);
+
+    // Valid admin login (admin / admin123)
+    const loginRes = await fetch(`${baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+    });
+    assert.equal(loginRes.status, 200);
+    const loginData = await loginRes.json();
+    assert.ok(loginData.token);
+    assert.equal(loginData.user.username, 'admin');
+
+    const authHeaders = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${loginData.token}`,
+    };
+
+    const sessionRes = await fetch(`${baseUrl}/api/admin/session`, {
+      headers: { Authorization: `Bearer ${loginData.token}` },
+    });
+    assert.equal(sessionRes.status, 200);
+    const sessionData = await sessionRes.json();
+    assert.equal(sessionData.authenticated, true);
+    assert.equal(sessionData.user.username, 'admin');
+
+    // Create new marmita (authenticated admin)
+    const createRes = await fetch(`${baseUrl}/api/marmitas`, {
+      method: 'POST',
+      headers: authHeaders,
       body: JSON.stringify({
         nome: 'Moqueca Baiana Tradicional',
         descricao: 'Peixe fresco no leite de coco, azeite de dendê, arroz e pirão.',
@@ -78,10 +124,10 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const created = (await createRes.json()).item;
     assert.equal(created.nome, 'Moqueca Baiana Tradicional');
 
-    // Update marmita via PUT
+    // Update marmita via PUT (authenticated admin)
     const updateRes = await fetch(`${baseUrl}/api/marmitas/${created.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         nome: 'Moqueca Baiana Premium',
         preco: 45.0,
@@ -93,7 +139,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(updated.nome, 'Moqueca Baiana Premium');
     assert.equal(updated.preco, 45);
 
-    // Place an order for the newly created dish
+    // Customer places an order without needing admin authentication
     const orderRes = await fetch(`${baseUrl}/api/pedidos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -109,20 +155,41 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const order = (await orderRes.json()).order;
     assert.equal(order.total, 90);
 
-    // Inspect Excel snapshot & binary download
-    const snapRes = await fetch(`${baseUrl}/api/excel/snapshot`);
+    // Admin lists orders and updates status
+    const pedidosRes = await fetch(`${baseUrl}/api/pedidos`, {
+      headers: { Authorization: `Bearer ${loginData.token}` },
+    });
+    assert.equal(pedidosRes.status, 200);
+    const pedidosList = await pedidosRes.json();
+    assert.ok(pedidosList.items.some((p) => p.id === order.id));
+
+    const patchOrderRes = await fetch(`${baseUrl}/api/pedidos/${order.id}/status`, {
+      method: 'PATCH',
+      headers: authHeaders,
+      body: JSON.stringify({ status: 'Em Preparo' }),
+    });
+    assert.equal(patchOrderRes.status, 200);
+    assert.equal((await patchOrderRes.json()).order.status, 'Em Preparo');
+
+    // Inspect Excel snapshot & binary download (authenticated admin)
+    const snapRes = await fetch(`${baseUrl}/api/excel/snapshot`, {
+      headers: { Authorization: `Bearer ${loginData.token}` },
+    });
     assert.equal(snapRes.status, 200);
     const snap = await snapRes.json();
     assert.equal(snap.sheets.length, 2);
 
-    const dlRes = await fetch(`${baseUrl}/api/excel/download`);
+    const dlRes = await fetch(`${baseUrl}/api/excel/download`, {
+      headers: { Authorization: `Bearer ${loginData.token}` },
+    });
     assert.equal(dlRes.status, 200);
     const buf = await dlRes.arrayBuffer();
     assert.ok(buf.byteLength > 2000);
 
-    // Delete marmita
+    // Delete marmita (authenticated admin)
     const delRes = await fetch(`${baseUrl}/api/marmitas/${created.id}`, {
       method: 'DELETE',
+      headers: { Authorization: `Bearer ${loginData.token}` },
     });
     assert.equal(delRes.status, 200);
     const afterDel = await fetch(`${baseUrl}/api/marmitas/${created.id}`);
@@ -131,7 +198,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     // Create another dish, confirm it stays on normal refresh and cleanup respects 10-min TTL until forced
     const tempDishRes = await fetch(`${baseUrl}/api/marmitas`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         nome: 'Escondidinho Temporário',
         descricao: 'Prato de teste para endpoint de limpeza.',
@@ -146,7 +213,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
 
     const softCleanupRes = await fetch(`${baseUrl}/api/marmitas/cleanup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({ force: false }),
     });
     assert.equal(softCleanupRes.status, 200);
@@ -155,7 +222,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
 
     const forceCleanupRes = await fetch(`${baseUrl}/api/marmitas/cleanup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({ force: true }),
     });
     assert.equal(forceCleanupRes.status, 200);
