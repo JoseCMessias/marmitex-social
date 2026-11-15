@@ -91,7 +91,7 @@ npm run dev
 Gera os arquivos estáticos em `client/dist/` e serve tudo pela própria API Express:
 
 ### 4. Rodar executável do MarmitexSocial no vercel
-[Clicla aqui](https://client-one-theta-55.vercel.app/)
+- **[Clicla aqui](https://client-one-theta-55.vercel.app/)**
 ```bash
 npm run build
 npm start
