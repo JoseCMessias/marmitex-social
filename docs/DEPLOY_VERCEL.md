@@ -100,3 +100,19 @@ O projeto do frontend em `https://client-one-theta-55.vercel.app` já está pré
 3. Após enviar as alterações (`git push`), os projetos conectados (`server-d27r` e `client`) publicam automaticamente; depois acesse:
    - Loja: `https://client-one-theta-55.vercel.app/#/`
    - Admin: `https://client-one-theta-55.vercel.app/#/admin`
+   - Protótipo (no próprio frontend): `https://client-one-theta-55.vercel.app/prototipo` (ou `/prototipo.html`)
+
+---
+
+## Passo a Passo: Deploy Dedicado Apenas do Protótipo (`docs/`) na Vercel
+
+Caso queira uma URL exclusiva na Vercel apontando diretamente para o protótipo (sem passar pelo app principal):
+
+1. Acesse [vercel.com](https://vercel.com) → **Add New... → Project** e importe o mesmo repositório `marmitex-social`.
+2. Em **Configure Project**, preencha:
+   - **Project Name:** por exemplo `marmitex-prototipo`
+   - **Framework Preset:** `Other`
+   - **Root Directory:** clique em **Edit** e selecione `docs`
+   - **Build Command:** deixe vazio (ou desativado)
+   - **Output Directory:** deixe vazio (ou `.`)
+3. Clique em **Deploy**. O arquivo [`docs/vercel.json`](vercel.json) redireciona a rota raiz `/` diretamente para `prototipo.html` e faz proxy de `/images/*` para as fotos publicadas no projeto `client`.
