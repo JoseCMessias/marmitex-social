@@ -58,6 +58,9 @@ export function AdminLogin({ onLogin, onBackToCustomer }) {
           <p className="mt-1.5 text-xs leading-relaxed text-stone-500 sm:text-sm">
             Faça login para cadastrar marmitas, acompanhar pedidos e gerenciar a planilha Excel.
           </p>
+          <p className="mt-1.5 text-xs leading-relaxed text-stone-500 sm:text-sm">
+            Login: admin / Senha: admin123
+          </p>
         </div>
 
         {/* Form */}
