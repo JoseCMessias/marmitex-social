@@ -97,7 +97,7 @@ npm start
 Acesse em `http://localhost:3001/#/` (cliente) e `http://localhost:3001/#/admin` (admin).
 
 ### 5. Acessar Online na Vercel
-- **Aplicação Web (Loja e Admin):** **[Clicla aqui](https://client-one-theta-55.vercel.app/)**
+- **Aplicação Web:** **[Loja e Admin na Vercel](https://client-one-theta-55.vercel.app/)**
 - **Protótipo Interativo de Telas:** **[Visualizar Prototipagem na Vercel](https://marmitex-social-docs.vercel.app/)**
 
 ---
