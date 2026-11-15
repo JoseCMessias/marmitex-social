@@ -16,6 +16,7 @@ const {
   deleteMarmita,
   ensureDatabase,
   getMarmitaById,
+  isBlobStorageEnabled,
   isInsertedMarmita,
   listMarmitas,
   listPedidos,
@@ -171,5 +172,36 @@ describe('MarmitexSocial Excel Database CRUD', () => {
     const stopScheduler = startInsertedDishCleanupScheduler(60000);
     assert.equal(typeof stopScheduler, 'function');
     stopScheduler();
+  });
+
+  it('detects Vercel Blob via BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID with OIDC on Vercel', () => {
+    const saved = {
+      EXCEL_DB_PATH: process.env.EXCEL_DB_PATH,
+      BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+      BLOB_STORE_ID: process.env.BLOB_STORE_ID,
+      VERCEL: process.env.VERCEL,
+    };
+
+    try {
+      delete process.env.EXCEL_DB_PATH;
+      delete process.env.BLOB_READ_WRITE_TOKEN;
+      delete process.env.BLOB_STORE_ID;
+      delete process.env.VERCEL;
+      assert.equal(isBlobStorageEnabled(), false);
+
+      process.env.BLOB_STORE_ID = 'store_test123';
+      process.env.VERCEL = '1';
+      assert.equal(isBlobStorageEnabled(), true);
+
+      delete process.env.BLOB_STORE_ID;
+      delete process.env.VERCEL;
+      process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test_123';
+      assert.equal(isBlobStorageEnabled(), true);
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+    }
   });
 });

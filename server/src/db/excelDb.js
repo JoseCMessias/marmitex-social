@@ -37,11 +37,21 @@ export function getInsertedDishTtlMs() {
   return DEFAULT_INSERTED_DISH_TTL_MS;
 }
 
+function hasVercelOidcContext() {
+  try {
+    const ctx = globalThis[Symbol.for('@vercel/request-context')]?.get?.();
+    if (ctx?.headers?.['x-vercel-oidc-token']) return true;
+  } catch {
+    // ignore request-context lookup errors
+  }
+  return Boolean(process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
+}
+
 export function isBlobStorageEnabled() {
   if (process.env.EXCEL_DB_PATH) return false;
   return Boolean(
     process.env.BLOB_READ_WRITE_TOKEN ||
-      (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN)
+      (process.env.BLOB_STORE_ID && hasVercelOidcContext())
   );
 }
 
@@ -57,7 +67,7 @@ export function getPersistenceInfo() {
     return {
       mode: 'vercel-tmp-ephemeral',
       persistent: false,
-      label: 'Vercel /tmp temporário (conecte Vercel Blob / BLOB_READ_WRITE_TOKEN)',
+      label: 'Vercel /tmp temporário (conecte Vercel Blob / BLOB_STORE_ID)',
     };
   }
   return {
