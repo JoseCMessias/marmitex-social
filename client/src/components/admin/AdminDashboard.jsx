@@ -12,6 +12,7 @@ import {
   Package,
   PauseCircle,
   Plus,
+  RotateCcw,
   Search,
   Sparkles,
   Trash2,
@@ -33,11 +34,13 @@ export function AdminDashboard({
   pedidos,
   persistence,
   ttlMinutes = 10,
+  backupStatus = null,
   adminUser,
   onSaveMarmita,
   onToggleField,
   onDeleteMarmita,
   onCleanupInserted,
+  onRestoreBackup,
   onUpdateOrderStatus,
   onRefreshAll,
   onLogout,
@@ -51,6 +54,7 @@ export function AdminDashboard({
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState(false);
   const [downloadingExcel, setDownloadingExcel] = useState(false);
   const [excelRefreshKey, setExcelRefreshKey] = useState(0);
 
@@ -122,6 +126,20 @@ export function AdminDashboard({
       setCleaningUp(false);
     }
   };
+
+  const handleRestoreBackupClick = async () => {
+    if (!onRestoreBackup) return;
+    setRestoringBackup(true);
+    try {
+      await onRestoreBackup();
+      setExcelRefreshKey((k) => k + 1);
+    } finally {
+      setRestoringBackup(false);
+    }
+  };
+
+  const pendingRestores = backupStatus?.pendingRestores || [];
+  const backupIntervalMinutes = backupStatus?.intervalMinutes || 10;
 
   const handleDownloadExcel = async () => {
     setDownloadingExcel(true);
@@ -300,6 +318,33 @@ export function AdminDashboard({
             projeto da API para manter os pratos inseridos na planilha entre refreshes e múltiplas
             instâncias.
           </p>
+        </div>
+      )}
+
+      {pendingRestores.length > 0 && (
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 sm:flex-row sm:items-center sm:p-4">
+          <div className="flex items-start gap-2.5 text-xs text-emerald-950 sm:text-sm">
+            <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+            <span>
+              <strong>
+                Backup automático ({backupIntervalMinutes} min): {pendingRestores.length} item(ns)
+                principal(is) deletado(s)
+              </strong>{' '}
+              ({pendingRestores.map((item) => item.nome).join(', ')}) será(ão) reinserido(s)
+              automaticamente na planilha em até {backupIntervalMinutes} minutos.
+            </span>
+          </div>
+          {onRestoreBackup && (
+            <button
+              type="button"
+              disabled={restoringBackup}
+              onClick={handleRestoreBackupClick}
+              className="inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-xs font-extrabold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-60 sm:w-auto"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>{restoringBackup ? 'Restaurando...' : 'Restaurar Backup Agora'}</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -641,7 +686,10 @@ export function AdminDashboard({
             </h3>
             <p className="mt-2 text-sm text-stone-600">
               Você está prestes a remover <strong>{deleteTarget.nome}</strong> ({deleteTarget.id}) da
-              planilha Excel. Essa ação não pode ser desfeita.
+              planilha Excel.{' '}
+              {deleteTarget.temporario
+                ? 'Essa ação não pode ser desfeita.'
+                : `Como é um item principal do cardápio, o backup de ${backupIntervalMinutes} minutos irá reinseri-lo automaticamente em ${backupIntervalMinutes} min.`}
             </p>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
               <button

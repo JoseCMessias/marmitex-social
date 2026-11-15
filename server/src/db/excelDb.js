@@ -11,11 +11,14 @@ const __dirname = path.dirname(__filename);
 
 export const DEFAULT_DB_PATH = path.resolve(__dirname, '../../data/marmitex_social.xlsx');
 export const DEFAULT_INSERTED_DISH_TTL_MS = 10 * 60 * 1000;
+export const DEFAULT_MAIN_DISH_BACKUP_DELAY_MS = 10 * 60 * 1000;
+export const BACKUP_SHEET_NAME = 'BackupCardapio';
 const BLOB_WORKBOOK_PATHNAME = process.env.EXCEL_BLOB_PATHNAME || 'db/marmitex_social.xlsx';
 const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 export const INITIAL_MARMITA_IDS = new Set(INITIAL_MARMITAS.map((item) => item.id));
+const MAIN_MARMITA_ORDER = new Map(INITIAL_MARMITAS.map((item, idx) => [item.id, idx]));
 const SEEDED_MAX_MARMITA_NUM = Math.max(
   100,
   ...INITIAL_MARMITAS.map((item) => {
@@ -35,6 +38,17 @@ export function getInsertedDishTtlMs() {
     return configured;
   }
   return DEFAULT_INSERTED_DISH_TTL_MS;
+}
+
+/**
+ * Returns the 10-minute backup/auto-restore window (in ms) for main menu dishes.
+ */
+export function getMainDishBackupDelayMs() {
+  const configured = Number(process.env.MAIN_MARMITA_RESTORE_DELAY_MS);
+  if (Number.isFinite(configured) && configured >= 0) {
+    return configured;
+  }
+  return DEFAULT_MAIN_DISH_BACKUP_DELAY_MS;
 }
 
 function hasVercelOidcContext() {
@@ -165,6 +179,13 @@ const MARMITAS_COLUMNS = [
   { header: 'destaque', key: 'destaque', width: 13 },
   { header: 'criadoEm', key: 'criadoEm', width: 26 },
   { header: 'atualizadoEm', key: 'atualizadoEm', width: 26 },
+];
+
+const BACKUP_COLUMNS = [
+  ...MARMITAS_COLUMNS,
+  { header: 'backupEm', key: 'backupEm', width: 26 },
+  { header: 'deletadoEm', key: 'deletadoEm', width: 26 },
+  { header: 'restaurarEm', key: 'restaurarEm', width: 26 },
 ];
 
 const PEDIDOS_COLUMNS = [
@@ -307,16 +328,9 @@ function styleWorksheet(worksheet, columns, currencyKeys = []) {
   }
 }
 
-async function buildWorkbookBuffer(marmitas, pedidos) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'MarmitexSocial';
-  workbook.created = new Date();
-  workbook.modified = new Date();
-
-  const marmitasSheet = workbook.addWorksheet('Marmitas');
-  marmitasSheet.columns = MARMITAS_COLUMNS;
-  for (const item of marmitas) {
-    marmitasSheet.addRow({
+function appendMarmitaRows(worksheet, rows) {
+  for (const item of rows) {
+    worksheet.addRow({
       ...item,
       preco: Number(item.preco),
       precoPromocional:
@@ -329,6 +343,17 @@ async function buildWorkbookBuffer(marmitas, pedidos) {
       destaque: Boolean(item.destaque),
     });
   }
+}
+
+async function buildWorkbookBuffer(marmitas, pedidos, backupEntries = []) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'MarmitexSocial';
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const marmitasSheet = workbook.addWorksheet('Marmitas');
+  marmitasSheet.columns = MARMITAS_COLUMNS;
+  appendMarmitaRows(marmitasSheet, marmitas);
   styleWorksheet(marmitasSheet, MARMITAS_COLUMNS, ['preco', 'precoPromocional']);
 
   const pedidosSheet = workbook.addWorksheet('Pedidos');
@@ -340,6 +365,11 @@ async function buildWorkbookBuffer(marmitas, pedidos) {
     });
   }
   styleWorksheet(pedidosSheet, PEDIDOS_COLUMNS, ['total']);
+
+  const backupSheet = workbook.addWorksheet(BACKUP_SHEET_NAME);
+  backupSheet.columns = BACKUP_COLUMNS;
+  appendMarmitaRows(backupSheet, backupEntries);
+  styleWorksheet(backupSheet, BACKUP_COLUMNS, ['preco', 'precoPromocional']);
 
   const arrayBuffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(arrayBuffer);
@@ -373,8 +403,8 @@ async function readStoredWorkbook() {
   }
 }
 
-async function writeDatabase(marmitas, pedidos) {
-  const buffer = await buildWorkbookBuffer(marmitas, pedidos);
+async function writeDatabase(marmitas, pedidos, backupEntries = []) {
+  const buffer = await buildWorkbookBuffer(marmitas, pedidos, backupEntries);
 
   if (isBlobStorageEnabled()) {
     await writeBlobBuffer(BLOB_WORKBOOK_PATHNAME, buffer, XLSX_MIME, 60);
@@ -460,6 +490,57 @@ export function isInsertedMarmita(item) {
   return Boolean(item && item.id && !INITIAL_MARMITA_IDS.has(item.id));
 }
 
+export function isMainMarmita(item) {
+  return Boolean(item && item.id && INITIAL_MARMITA_IDS.has(item.id));
+}
+
+function hydrateBackupEntry(raw) {
+  const base = hydrateMarmita(raw);
+  return {
+    ...base,
+    backupEm: raw.backupEm ? String(raw.backupEm) : base.atualizadoEm,
+    deletadoEm: raw.deletadoEm ? String(raw.deletadoEm) : '',
+    restaurarEm: raw.restaurarEm ? String(raw.restaurarEm) : '',
+  };
+}
+
+function stripBackupMeta(entry) {
+  const { backupEm: _b, deletadoEm: _d, restaurarEm: _r, ...marmita } = entry;
+  return marmita;
+}
+
+function buildBackupEntry(item, { backupEm, deletadoEm = '', restaurarEm = '' } = {}) {
+  return {
+    ...hydrateMarmita(item),
+    backupEm: backupEm || new Date().toISOString(),
+    deletadoEm: deletadoEm || '',
+    restaurarEm: restaurarEm || '',
+  };
+}
+
+function upsertBackupEntry(backupEntries, nextEntry) {
+  const next = backupEntries.filter((entry) => entry.id !== nextEntry.id);
+  next.push(nextEntry);
+  next.sort((a, b) => {
+    const orderA = MAIN_MARMITA_ORDER.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = MAIN_MARMITA_ORDER.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    return orderA - orderB;
+  });
+  return next;
+}
+
+function sortMarmitasForSheet(marmitas) {
+  const inserted = marmitas.filter((item) => !isMainMarmita(item));
+  const main = marmitas
+    .filter((item) => isMainMarmita(item))
+    .sort((a, b) => {
+      const orderA = MAIN_MARMITA_ORDER.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const orderB = MAIN_MARMITA_ORDER.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return orderA - orderB;
+    });
+  return [...inserted, ...main];
+}
+
 export function serializeMarmita(item) {
   const temporario = isInsertedMarmita(item);
   const createdMs = Date.parse(item.criadoEm);
@@ -502,6 +583,115 @@ export function getExpiredInsertedMarmitas(
   return { activeMarmitas, removedMarmitas };
 }
 
+/**
+ * Reconciles 10-minute inserted-dish expiration and 10-minute main-dish backup/restore.
+ */
+export function reconcileWorkbookState(
+  marmitas,
+  backupEntries = [],
+  {
+    hasBackupSheet = true,
+    insertedMaxAgeMs = getInsertedDishTtlMs(),
+    backupDelayMs = getMainDishBackupDelayMs(),
+    now = Date.now(),
+    forceCleanup = false,
+    forceRestore = false,
+    restoreIds = null,
+  } = {}
+) {
+  const nowMs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const targetRestoreSet = Array.isArray(restoreIds) ? new Set(restoreIds) : null;
+
+  const { activeMarmitas, removedMarmitas } = getExpiredInsertedMarmitas(marmitas, {
+    maxAgeMs: insertedMaxAgeMs,
+    now: nowMs,
+    force: forceCleanup,
+  });
+
+  const activeById = new Map(activeMarmitas.map((item) => [item.id, item]));
+  const backupById = new Map(backupEntries.map((entry) => [entry.id, entry]));
+  const nextBackup = [];
+  const restoredMarmitas = [];
+  let backupChanged = !hasBackupSheet;
+
+  for (const seedItem of INITIAL_MARMITAS) {
+    const active = activeById.get(seedItem.id);
+    const prevBackup = backupById.get(seedItem.id);
+
+    if (active) {
+      const lastBackupMs = prevBackup ? Date.parse(prevBackup.backupEm) : NaN;
+      const backupStale =
+        !prevBackup ||
+        Boolean(prevBackup.deletadoEm) ||
+        Boolean(prevBackup.restaurarEm) ||
+        !Number.isFinite(lastBackupMs) ||
+        nowMs - lastBackupMs >= backupDelayMs;
+
+      if (backupStale) {
+        nextBackup.push(buildBackupEntry(active, { backupEm: nowIso }));
+        backupChanged = true;
+      } else {
+        nextBackup.push(prevBackup);
+      }
+      continue;
+    }
+
+    // Main item is currently missing (deleted from Marmitas sheet).
+    const snapshotSource = prevBackup
+      ? stripBackupMeta(prevBackup)
+      : { ...seedItem, criadoEm: nowIso, atualizadoEm: nowIso };
+    const hadDeletionStamp = Boolean(prevBackup?.deletadoEm && prevBackup?.restaurarEm);
+    const deletadoEm = hadDeletionStamp ? prevBackup.deletadoEm : nowIso;
+    const restaurarEm = hadDeletionStamp
+      ? prevBackup.restaurarEm
+      : new Date(nowMs + backupDelayMs).toISOString();
+    const restoreAtMs = Date.parse(restaurarEm);
+    const isTargeted = targetRestoreSet ? targetRestoreSet.has(seedItem.id) : false;
+    const isDue =
+      forceRestore ||
+      isTargeted ||
+      (hadDeletionStamp && (!Number.isFinite(restoreAtMs) || nowMs >= restoreAtMs));
+
+    if (isDue) {
+      const restoredItem = hydrateMarmita({
+        ...snapshotSource,
+        atualizadoEm: nowIso,
+      });
+      restoredMarmitas.push(restoredItem);
+      nextBackup.push(buildBackupEntry(restoredItem, { backupEm: nowIso }));
+      backupChanged = true;
+    } else {
+      const preservedBackup = buildBackupEntry(snapshotSource, {
+        backupEm: prevBackup?.backupEm || nowIso,
+        deletadoEm,
+        restaurarEm,
+      });
+      if (
+        !prevBackup ||
+        prevBackup.deletadoEm !== preservedBackup.deletadoEm ||
+        prevBackup.restaurarEm !== preservedBackup.restaurarEm
+      ) {
+        backupChanged = true;
+      }
+      nextBackup.push(preservedBackup);
+    }
+  }
+
+  const nextMarmitas =
+    restoredMarmitas.length > 0
+      ? sortMarmitasForSheet([...activeMarmitas, ...restoredMarmitas])
+      : activeMarmitas;
+
+  return {
+    marmitas: nextMarmitas,
+    backupEntries: nextBackup,
+    removedMarmitas,
+    restoredMarmitas,
+    changed: removedMarmitas.length > 0 || restoredMarmitas.length > 0 || backupChanged,
+  };
+}
+
 async function ensureDatabaseUnsafe() {
   const existing = await readStoredWorkbook();
   if (existing) return existing;
@@ -512,11 +702,14 @@ async function ensureDatabaseUnsafe() {
     criadoEm: now,
     atualizadoEm: now,
   }));
+  const seededBackup = seededMarmitas.map((item) =>
+    buildBackupEntry(item, { backupEm: now })
+  );
   const seededPedidos = INITIAL_PEDIDOS.map((order) => ({
     ...order,
     criadoEm: now,
   }));
-  await writeDatabase(seededMarmitas, seededPedidos);
+  await writeDatabase(seededMarmitas, seededPedidos, seededBackup);
   return readStoredWorkbook();
 }
 
@@ -536,20 +729,40 @@ async function readWorkbookUnsafe() {
 
   const marmitasSheet = workbook.getWorksheet('Marmitas');
   const pedidosSheet = workbook.getWorksheet('Pedidos');
+  const backupSheet = workbook.getWorksheet(BACKUP_SHEET_NAME);
 
   const marmitas = readSheetObjects(marmitasSheet, MARMITAS_COLUMNS).map(hydrateMarmita);
   const pedidos = readSheetObjects(pedidosSheet, PEDIDOS_COLUMNS).map(hydratePedido);
+  const backupEntries = backupSheet
+    ? readSheetObjects(backupSheet, BACKUP_COLUMNS).map(hydrateBackupEntry)
+    : [];
 
-  return { marmitas, pedidos, stored };
+  return {
+    marmitas,
+    pedidos,
+    backupEntries,
+    hasBackupSheet: Boolean(backupSheet),
+    stored,
+  };
 }
 
 async function loadWorkbookData() {
   await ensureDatabase();
   const data = await readWorkbookUnsafe();
-  const { removedMarmitas } = getExpiredInsertedMarmitas(data.marmitas);
+  const check = reconcileWorkbookState(data.marmitas, data.backupEntries, {
+    hasBackupSheet: data.hasBackupSheet,
+  });
 
-  if (removedMarmitas.length > 0) {
-    await cleanupInsertedMarmitas();
+  if (check.changed) {
+    await withWriteLock(async () => {
+      const fresh = await readWorkbookUnsafe();
+      const next = reconcileWorkbookState(fresh.marmitas, fresh.backupEntries, {
+        hasBackupSheet: fresh.hasBackupSheet,
+      });
+      if (next.changed) {
+        await writeDatabase(next.marmitas, fresh.pedidos, next.backupEntries);
+      }
+    });
     return readWorkbookUnsafe();
   }
 
@@ -570,45 +783,80 @@ function generateNextId(prefix, existingItems) {
 
 export async function cleanupInsertedMarmitas({
   maxAgeMs = getInsertedDishTtlMs(),
+  restoreDelayMs = getMainDishBackupDelayMs(),
   now = Date.now(),
   force = false,
 } = {}) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await readWorkbookUnsafe();
-    const { activeMarmitas, removedMarmitas } = getExpiredInsertedMarmitas(marmitas, {
-      maxAgeMs,
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const next = reconcileWorkbookState(marmitas, backupEntries, {
+      hasBackupSheet,
+      insertedMaxAgeMs: maxAgeMs,
+      backupDelayMs: restoreDelayMs,
       now,
-      force,
+      forceCleanup: force,
     });
 
-    if (removedMarmitas.length === 0) {
-      return {
-        deletedCount: 0,
-        deletedIds: [],
-        remainingCount: marmitas.length,
-        ttlMinutes: Math.round(maxAgeMs / 60000),
-      };
+    if (next.changed) {
+      await writeDatabase(next.marmitas, pedidos, next.backupEntries);
     }
 
-    await writeDatabase(activeMarmitas, pedidos);
     return {
-      deletedCount: removedMarmitas.length,
-      deletedIds: removedMarmitas.map((item) => item.id),
-      remainingCount: activeMarmitas.length,
+      deletedCount: next.removedMarmitas.length,
+      deletedIds: next.removedMarmitas.map((item) => item.id),
+      restoredCount: next.restoredMarmitas.length,
+      restoredIds: next.restoredMarmitas.map((item) => item.id),
+      remainingCount: next.marmitas.length,
       ttlMinutes: Math.round(maxAgeMs / 60000),
+      backupMinutes: Math.round(restoreDelayMs / 60000),
+    };
+  });
+}
+
+/**
+ * Restores deleted main dishes whose 10-minute backup timer elapsed (or when forced).
+ */
+export async function restoreDeletedMainMarmitas({
+  restoreDelayMs = getMainDishBackupDelayMs(),
+  now = Date.now(),
+  force = false,
+  ids = null,
+} = {}) {
+  return withWriteLock(async () => {
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const next = reconcileWorkbookState(marmitas, backupEntries, {
+      hasBackupSheet,
+      backupDelayMs: restoreDelayMs,
+      now,
+      forceRestore: force,
+      restoreIds: ids,
+    });
+
+    if (next.changed) {
+      await writeDatabase(next.marmitas, pedidos, next.backupEntries);
+    }
+
+    const pendingRestores = next.backupEntries.filter((entry) => Boolean(entry.restaurarEm));
+    return {
+      restoredCount: next.restoredMarmitas.length,
+      restoredIds: next.restoredMarmitas.map((item) => item.id),
+      restoredItems: next.restoredMarmitas,
+      pendingRestoreCount: pendingRestores.length,
+      remainingCount: next.marmitas.length,
+      backupMinutes: Math.round(restoreDelayMs / 60000),
     };
   });
 }
 
 export function startInsertedDishCleanupScheduler(
-  intervalMs = getInsertedDishTtlMs(),
+  intervalMs = Math.min(60 * 1000, getInsertedDishTtlMs(), getMainDishBackupDelayMs()),
   onCleaned = null
 ) {
-  const safeInterval = Math.max(1000, Number(intervalMs) || DEFAULT_INSERTED_DISH_TTL_MS);
+  const safeInterval = Math.max(1000, Number(intervalMs) || 60 * 1000);
   const timer = setInterval(async () => {
     try {
       const result = await cleanupInsertedMarmitas();
-      if (result.deletedCount > 0 && typeof onCleaned === 'function') {
+      if ((result.deletedCount > 0 || result.restoredCount > 0) && typeof onCleaned === 'function') {
         onCleaned(result);
       }
     } catch (err) {
@@ -635,58 +883,86 @@ export async function getMarmitaById(id) {
 
 export async function createMarmita(payload) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await readWorkbookUnsafe();
-    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, { hasBackupSheet });
     const now = new Date().toISOString();
     const newItem = hydrateMarmita({
       ...payload,
-      id: generateNextId('MARM', activeMarmitas),
+      id: generateNextId('MARM', reconciled.marmitas),
       criadoEm: now,
       atualizadoEm: now,
     });
-    const updated = [newItem, ...activeMarmitas];
-    await writeDatabase(updated, pedidos);
+    const updated = [newItem, ...reconciled.marmitas];
+    await writeDatabase(updated, pedidos, reconciled.backupEntries);
     return newItem;
   });
 }
 
 export async function updateMarmita(id, payload) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await readWorkbookUnsafe();
-    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
-    const index = activeMarmitas.findIndex((item) => item.id === id);
-    if (index === -1) return null;
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, { hasBackupSheet });
+    const index = reconciled.marmitas.findIndex((item) => item.id === id);
+    if (index === -1) {
+      if (reconciled.changed) {
+        await writeDatabase(reconciled.marmitas, pedidos, reconciled.backupEntries);
+      }
+      return null;
+    }
 
-    const existing = activeMarmitas[index];
+    const now = new Date().toISOString();
+    const existing = reconciled.marmitas[index];
     const updatedItem = hydrateMarmita({
       ...existing,
       ...payload,
       id: existing.id,
       criadoEm: existing.criadoEm,
-      atualizadoEm: new Date().toISOString(),
+      atualizadoEm: now,
     });
 
-    const nextMarmitas = [...activeMarmitas];
+    const nextMarmitas = [...reconciled.marmitas];
     nextMarmitas[index] = updatedItem;
-    await writeDatabase(nextMarmitas, pedidos);
+
+    // Keep the main menu backup synchronized with the latest item edits.
+    const nextBackup = isMainMarmita(updatedItem)
+      ? upsertBackupEntry(reconciled.backupEntries, buildBackupEntry(updatedItem, { backupEm: now }))
+      : reconciled.backupEntries;
+
+    await writeDatabase(nextMarmitas, pedidos, nextBackup);
     return updatedItem;
   });
 }
 
 export async function deleteMarmita(id) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await readWorkbookUnsafe();
-    const { activeMarmitas, removedMarmitas } = getExpiredInsertedMarmitas(marmitas);
-    const exists = activeMarmitas.some((item) => item.id === id);
-    if (!exists) {
-      if (removedMarmitas.length > 0) {
-        await writeDatabase(activeMarmitas, pedidos);
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, { hasBackupSheet });
+    const target = reconciled.marmitas.find((item) => item.id === id);
+    if (!target) {
+      if (reconciled.changed) {
+        await writeDatabase(reconciled.marmitas, pedidos, reconciled.backupEntries);
       }
       return false;
     }
 
-    const nextMarmitas = activeMarmitas.filter((item) => item.id !== id);
-    await writeDatabase(nextMarmitas, pedidos);
+    const nextMarmitas = reconciled.marmitas.filter((item) => item.id !== id);
+    const nowMs = Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+
+    let nextBackup = reconciled.backupEntries;
+    if (isMainMarmita(target)) {
+      const restaurarEm = new Date(nowMs + getMainDishBackupDelayMs()).toISOString();
+      nextBackup = upsertBackupEntry(
+        reconciled.backupEntries,
+        buildBackupEntry(target, {
+          backupEm: nowIso,
+          deletadoEm: nowIso,
+          restaurarEm,
+        })
+      );
+    }
+
+    await writeDatabase(nextMarmitas, pedidos, nextBackup);
     return true;
   });
 }
@@ -698,8 +974,9 @@ export async function listPedidos() {
 
 export async function createPedido(payload) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await readWorkbookUnsafe();
-    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, { hasBackupSheet });
+    const activeMarmitas = reconciled.marmitas;
     const now = new Date().toISOString();
 
     const itemsWithDetails = [];
@@ -750,15 +1027,15 @@ export async function createPedido(payload) {
     });
 
     const nextPedidos = [newOrder, ...pedidos];
-    await writeDatabase(activeMarmitas, nextPedidos);
+    await writeDatabase(activeMarmitas, nextPedidos, reconciled.backupEntries);
     return newOrder;
   });
 }
 
 export async function updatePedidoStatus(id, status) {
   return withWriteLock(async () => {
-    const { marmitas, pedidos } = await readWorkbookUnsafe();
-    const { activeMarmitas } = getExpiredInsertedMarmitas(marmitas);
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, { hasBackupSheet });
     const index = pedidos.findIndex((order) => order.id === id);
     if (index === -1) return null;
 
@@ -767,9 +1044,43 @@ export async function updatePedidoStatus(id, status) {
       ...nextPedidos[index],
       status,
     };
-    await writeDatabase(activeMarmitas, nextPedidos);
+    await writeDatabase(reconciled.marmitas, nextPedidos, reconciled.backupEntries);
     return nextPedidos[index];
   });
+}
+
+function summarizeBackupEntries(backupEntries) {
+  const pendingRestores = backupEntries
+    .filter((entry) => Boolean(entry.restaurarEm))
+    .map((entry) => ({
+      id: entry.id,
+      nome: entry.nome,
+      deletadoEm: entry.deletadoEm,
+      restaurarEm: entry.restaurarEm,
+    }));
+
+  const backupTimes = backupEntries
+    .map((entry) => Date.parse(entry.backupEm))
+    .filter((ts) => Number.isFinite(ts));
+
+  return {
+    sheetName: BACKUP_SHEET_NAME,
+    intervalMinutes: Math.round(getMainDishBackupDelayMs() / 60000),
+    backedUpCount: backupEntries.length,
+    pendingRestoreCount: pendingRestores.length,
+    pendingRestores,
+    lastBackupAt: backupTimes.length > 0 ? new Date(Math.max(...backupTimes)).toISOString() : null,
+  };
+}
+
+export async function getBackupSummary() {
+  const { backupEntries } = await loadWorkbookData();
+  return summarizeBackupEntries(backupEntries);
+}
+
+export async function getBackupEntryById(id) {
+  const { backupEntries } = await loadWorkbookData();
+  return backupEntries.find((entry) => entry.id === id) || null;
 }
 
 export async function getExcelFileBuffer() {
@@ -778,7 +1089,7 @@ export async function getExcelFileBuffer() {
 }
 
 export async function getExcelSnapshot() {
-  const { marmitas, pedidos, stored } = await loadWorkbookData();
+  const { marmitas, pedidos, backupEntries, stored } = await loadWorkbookData();
   const dbPath = getDbPath();
   return {
     filePath: dbPath,
@@ -787,6 +1098,8 @@ export async function getExcelSnapshot() {
     updatedAt: stored.updatedAt,
     persistence: getPersistenceInfo(),
     insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
+    mainDishBackupMinutes: Math.round(getMainDishBackupDelayMs() / 60000),
+    backup: summarizeBackupEntries(backupEntries),
     sheets: [
       {
         name: 'Marmitas',
@@ -799,6 +1112,12 @@ export async function getExcelSnapshot() {
         columns: PEDIDOS_COLUMNS.map((c) => c.key),
         rowCount: pedidos.length,
         rows: pedidos,
+      },
+      {
+        name: BACKUP_SHEET_NAME,
+        columns: BACKUP_COLUMNS.map((c) => c.key),
+        rowCount: backupEntries.length,
+        rows: backupEntries,
       },
     ],
   };

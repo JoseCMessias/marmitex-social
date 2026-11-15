@@ -180,6 +180,13 @@ export const api = {
     });
   },
 
+  async restoreBackupMarmitas({ force = false, ids = null } = {}) {
+    return request('/marmitas/backup/restore', {
+      method: 'POST',
+      body: JSON.stringify({ force, ids }),
+    });
+  },
+
   async uploadImage(file) {
     const formData = new FormData();
     formData.append('image', file);

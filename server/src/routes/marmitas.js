@@ -9,9 +9,14 @@ import {
   cleanupInsertedMarmitas,
   createMarmita,
   deleteMarmita,
+  getBackupEntryById,
+  getBackupSummary,
+  getMainDishBackupDelayMs,
   getMarmitaById,
   isBlobStorageEnabled,
+  isMainMarmita,
   listMarmitas,
+  restoreDeletedMainMarmitas,
   serializeMarmita,
   updateMarmita,
   writeBlobBuffer,
@@ -193,6 +198,34 @@ async function handleCleanup(req, res, next) {
 marmitasRouter.get('/cleanup', requireAdminAuth, handleCleanup);
 marmitasRouter.post('/cleanup', requireAdminAuth, handleCleanup);
 
+marmitasRouter.get('/backup', requireAdminAuth, async (_req, res, next) => {
+  try {
+    const backup = await getBackupSummary();
+    res.json({ backup });
+  } catch (err) {
+    next(err);
+  }
+});
+
+marmitasRouter.post('/backup/restore', requireAdminAuth, async (req, res, next) => {
+  try {
+    const force = req.body?.force === true || req.query?.force === 'true';
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids : null;
+    const result = await restoreDeletedMainMarmitas({ force, ids });
+    const message =
+      result.restoredCount > 0
+        ? `${result.restoredCount} item(ns) principal(is) restaurado(s) do backup para a planilha.`
+        : 'Nenhum item principal elegível para restauração no momento.';
+    res.json({
+      ...result,
+      restoredItems: result.restoredItems.map(serializeMarmita),
+      message,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 marmitasRouter.get('/:id', async (req, res, next) => {
   try {
     const item = await getMarmitaById(req.params.id);
@@ -281,7 +314,21 @@ marmitasRouter.delete('/:id', requireAdminAuth, async (req, res, next) => {
     if (!deleted) {
       return res.status(404).json({ error: 'Marmita não encontrada na planilha.' });
     }
-    res.json({ deleted: true, id: req.params.id, message: 'Marmita removida da planilha Excel!' });
+    const isMain = isMainMarmita({ id: req.params.id });
+    const backupEntry = isMain ? await getBackupEntryById(req.params.id) : null;
+    const backupRestoreMinutes = Math.round(getMainDishBackupDelayMs() / 60000);
+    const message =
+      isMain && backupEntry?.restaurarEm
+        ? `Item principal removido. O backup reinserirá o mesmo item na planilha em ${backupRestoreMinutes} min.`
+        : 'Marmita removida da planilha Excel!';
+    res.json({
+      deleted: true,
+      id: req.params.id,
+      backupScheduled: Boolean(isMain && backupEntry?.restaurarEm),
+      restaurarEm: backupEntry?.restaurarEm || null,
+      backupRestoreMinutes,
+      message,
+    });
   } catch (err) {
     next(err);
   }

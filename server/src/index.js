@@ -7,10 +7,12 @@ import { requireAdminAuth } from './auth/adminAuth.js';
 import {
   cleanupInsertedMarmitas,
   ensureDatabase,
+  getBackupSummary,
   getDbPath,
   getExcelFileBuffer,
   getExcelSnapshot,
   getInsertedDishTtlMs,
+  getMainDishBackupDelayMs,
   getPersistenceInfo,
   isBlobStorageEnabled,
   readBlobBuffer,
@@ -56,7 +58,7 @@ export function createApp() {
 
   app.get('/api/health', async (_req, res, next) => {
     try {
-      await ensureDatabase();
+      const backup = await getBackupSummary();
       res.json({
         status: 'ok',
         service: 'MarmitexSocial API',
@@ -64,6 +66,8 @@ export function createApp() {
         filePath: getDbPath(),
         persistence: getPersistenceInfo(),
         insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
+        mainDishBackupMinutes: Math.round(getMainDishBackupDelayMs() / 60000),
+        backup,
       });
     } catch (err) {
       next(err);
@@ -79,7 +83,7 @@ export function createApp() {
       const result = await cleanupInsertedMarmitas();
       res.json({
         ...result,
-        message: 'Limpeza de pratos inseridos executada com sucesso.',
+        message: 'Manutenção de limpeza e backup automático de 10 min executada com sucesso.',
       });
     } catch (err) {
       next(err);
@@ -134,12 +138,15 @@ export function createApp() {
     database: 'Excel (.xlsx)',
     persistence: getPersistenceInfo(),
     insertedDishTtlMinutes: Math.round(getInsertedDishTtlMs() / 60000),
+    mainDishBackupMinutes: Math.round(getMainDishBackupDelayMs() / 60000),
     endpoints: [
       '/api/health',
       '/api/admin/login',
       '/api/admin/session',
       '/api/marmitas',
       '/api/marmitas/cleanup',
+      '/api/marmitas/backup',
+      '/api/marmitas/backup/restore',
       '/api/pagamentos/pix',
       '/api/pedidos',
       '/api/excel/snapshot',
@@ -176,17 +183,24 @@ if (isDirectRun) {
     console.log(`MarmitexSocial API rodando em http://localhost:${PORT}`);
     console.log(`Planilha Excel conectada em: ${getDbPath()} (${getPersistenceInfo().label})`);
     console.log(
-      `Limpeza automática de pratos inseridos configurada a cada ${Math.round(
-        getInsertedDishTtlMs() / 60000
+      `Limpeza de pratos inseridos e backup/restauração do cardápio principal configurados para ${Math.round(
+        getMainDishBackupDelayMs() / 60000
       )} minuto(s).`
     );
   });
   ensureDatabase()
     .then(() => {
       startInsertedDishCleanupScheduler(undefined, (result) => {
-        console.log(
-          `[Auto-Cleanup] ${result.deletedCount} prato(s) inserido(s) removido(s): ${result.deletedIds.join(', ')}`
-        );
+        if (result.deletedCount > 0) {
+          console.log(
+            `[Auto-Cleanup] ${result.deletedCount} prato(s) inserido(s) removido(s): ${result.deletedIds.join(', ')}`
+          );
+        }
+        if (result.restoredCount > 0) {
+          console.log(
+            `[Auto-Backup-Restore] ${result.restoredCount} item(ns) principal(is) restaurado(s): ${result.restoredIds.join(', ')}`
+          );
+        }
       });
     })
     .catch((err) => {

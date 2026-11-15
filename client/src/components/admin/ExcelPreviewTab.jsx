@@ -63,6 +63,9 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
                 {snapshot.insertedDishTtlMinutes
                   ? ` • Limpeza automática: ${snapshot.insertedDishTtlMinutes} min`
                   : ''}
+                {snapshot.mainDishBackupMinutes
+                  ? ` • Backup cardápio: ${snapshot.mainDishBackupMinutes} min`
+                  : ''}
               </p>
             )}
           </div>

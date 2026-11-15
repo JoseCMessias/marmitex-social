@@ -10,16 +10,20 @@ const testExcelPath = path.join(tempDir, 'test_marmitex.xlsx');
 process.env.EXCEL_DB_PATH = testExcelPath;
 
 const {
+  BACKUP_SHEET_NAME,
   cleanupInsertedMarmitas,
   createMarmita,
   createPedido,
   deleteMarmita,
   ensureDatabase,
+  getBackupEntryById,
+  getBackupSummary,
   getMarmitaById,
   isBlobStorageEnabled,
   isInsertedMarmita,
   listMarmitas,
   listPedidos,
+  restoreDeletedMainMarmitas,
   startInsertedDishCleanupScheduler,
   updateMarmita,
   updatePedidoStatus,
@@ -45,6 +49,7 @@ describe('MarmitexSocial Excel Database CRUD', () => {
     await workbook.xlsx.readFile(testExcelPath);
     assert.ok(workbook.getWorksheet('Marmitas'), 'Marmitas worksheet should exist');
     assert.ok(workbook.getWorksheet('Pedidos'), 'Pedidos worksheet should exist');
+    assert.ok(workbook.getWorksheet(BACKUP_SHEET_NAME), 'BackupCardapio worksheet should exist');
   });
 
   it('creates, reads, updates, and deletes a marmita directly in Excel', async () => {
@@ -172,6 +177,80 @@ describe('MarmitexSocial Excel Database CRUD', () => {
     const stopScheduler = startInsertedDishCleanupScheduler(60000);
     assert.equal(typeof stopScheduler, 'function');
     stopScheduler();
+  });
+
+  it('backs up existing main menu items and auto-restores deleted main items after 10 minutes', async () => {
+    const editedMain = await updateMarmita('MARM-102', {
+      nome: 'Frango Grelhado Customizado na Planilha',
+      preco: 29.5,
+    });
+    assert.equal(editedMain.nome, 'Frango Grelhado Customizado na Planilha');
+
+    // Delete main menu item -> stays deleted for 10 minutes, snapshot kept in BackupCardapio
+    const deleted = await deleteMarmita('MARM-102');
+    assert.equal(deleted, true);
+    assert.equal(await getMarmitaById('MARM-102'), null);
+
+    const backupEntry = await getBackupEntryById('MARM-102');
+    assert.ok(backupEntry);
+    assert.ok(backupEntry.deletadoEm);
+    assert.ok(backupEntry.restaurarEm);
+    assert.equal(backupEntry.nome, 'Frango Grelhado Customizado na Planilha');
+
+    const summary = await getBackupSummary();
+    assert.equal(summary.pendingRestoreCount, 1);
+    assert.equal(summary.pendingRestores[0].id, 'MARM-102');
+
+    // At 5 minutes it is NOT restored yet
+    const deletedMs = Date.parse(backupEntry.deletadoEm);
+    const at5Min = await restoreDeletedMainMarmitas({
+      now: deletedMs + 5 * 60 * 1000,
+    });
+    assert.equal(at5Min.restoredCount, 0);
+    assert.equal(await getMarmitaById('MARM-102'), null);
+
+    // At 10 minutes it IS automatically re-inserted with the exact same edited values
+    const at10Min = await cleanupInsertedMarmitas({
+      now: deletedMs + 10 * 60 * 1000,
+    });
+    assert.equal(at10Min.restoredCount, 1);
+    assert.deepEqual(at10Min.restoredIds, ['MARM-102']);
+
+    const restored = await getMarmitaById('MARM-102');
+    assert.ok(restored);
+    assert.equal(restored.nome, 'Frango Grelhado Customizado na Planilha');
+    assert.equal(restored.preco, 29.5);
+
+    const summaryAfter = await getBackupSummary();
+    assert.equal(summaryAfter.pendingRestoreCount, 0);
+
+    // Migrating a legacy 2-sheet workbook (without BackupCardapio) creates BackupCardapio and preserves values
+    const legacyWb = new ExcelJS.Workbook();
+    await legacyWb.xlsx.readFile(testExcelPath);
+    legacyWb.removeWorksheet(BACKUP_SHEET_NAME);
+    await legacyWb.xlsx.writeFile(testExcelPath);
+
+    const migratedList = await listMarmitas();
+    assert.ok(migratedList.some((m) => m.id === 'MARM-102' && m.preco === 29.5));
+
+    const migratedWb = new ExcelJS.Workbook();
+    await migratedWb.xlsx.readFile(testExcelPath);
+    assert.ok(migratedWb.getWorksheet(BACKUP_SHEET_NAME));
+
+    // Lazy automatic restore on next read when delay is 0ms
+    const prevDelay = process.env.MAIN_MARMITA_RESTORE_DELAY_MS;
+    process.env.MAIN_MARMITA_RESTORE_DELAY_MS = '0';
+    try {
+      await deleteMarmita('MARM-101');
+      const lazyRestored = await listMarmitas();
+      assert.ok(lazyRestored.some((m) => m.id === 'MARM-101'));
+    } finally {
+      if (prevDelay === undefined) {
+        delete process.env.MAIN_MARMITA_RESTORE_DELAY_MS;
+      } else {
+        process.env.MAIN_MARMITA_RESTORE_DELAY_MS = prevDelay;
+      }
+    }
   });
 
   it('detects Vercel Blob via BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID with OIDC on Vercel', () => {

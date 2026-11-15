@@ -48,6 +48,7 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const health = await healthRes.json();
     assert.equal(health.database, 'Excel (.xlsx)');
     assert.equal(health.insertedDishTtlMinutes, 10);
+    assert.equal(health.mainDishBackupMinutes, 10);
     assert.equal(health.persistence.persistent, true);
 
     const listRes = await fetch(`${baseUrl}/api/marmitas`);
@@ -178,7 +179,8 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     });
     assert.equal(snapRes.status, 200);
     const snap = await snapRes.json();
-    assert.equal(snap.sheets.length, 2);
+    assert.equal(snap.sheets.length, 3);
+    assert.equal(snap.sheets[2].name, 'BackupCardapio');
 
     const dlRes = await fetch(`${baseUrl}/api/excel/download`, {
       headers: { Authorization: `Bearer ${loginData.token}` },
@@ -230,6 +232,52 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const forceCleanup = await forceCleanupRes.json();
     assert.equal(forceCleanup.deletedCount, 1);
     assert.deepEqual(forceCleanup.deletedIds, [tempDish.id]);
+
+    // Deleting a main menu item schedules a 10-minute backup restore of the exact same item
+    const editMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
+      method: 'PUT',
+      headers: authHeaders,
+      body: JSON.stringify({ precoPromocional: 19.9 }),
+    });
+    assert.equal(editMainRes.status, 200);
+
+    const delMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${loginData.token}` },
+    });
+    assert.equal(delMainRes.status, 200);
+    const delMainData = await delMainRes.json();
+    assert.equal(delMainData.backupScheduled, true);
+    assert.ok(delMainData.restaurarEm);
+    assert.equal((await fetch(`${baseUrl}/api/marmitas/MARM-101`)).status, 404);
+
+    const backupStatusRes = await fetch(`${baseUrl}/api/marmitas/backup`, {
+      headers: { Authorization: `Bearer ${loginData.token}` },
+    });
+    assert.equal(backupStatusRes.status, 200);
+    const backupStatusData = await backupStatusRes.json();
+    assert.equal(backupStatusData.backup.pendingRestoreCount, 1);
+
+    const softRestoreRes = await fetch(`${baseUrl}/api/marmitas/backup/restore`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ force: false }),
+    });
+    assert.equal((await softRestoreRes.json()).restoredCount, 0);
+
+    const forceRestoreRes = await fetch(`${baseUrl}/api/marmitas/backup/restore`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ force: true }),
+    });
+    assert.equal(forceRestoreRes.status, 200);
+    const forceRestoreData = await forceRestoreRes.json();
+    assert.equal(forceRestoreData.restoredCount, 1);
+    assert.deepEqual(forceRestoreData.restoredIds, ['MARM-101']);
+
+    const restoredMainRes = await fetch(`${baseUrl}/api/marmitas/MARM-101`);
+    assert.equal(restoredMainRes.status, 200);
+    assert.equal((await restoredMainRes.json()).item.precoPromocional, 19.9);
 
     // Upload image via Multer 2.x (valid image + invalid mime rejection)
     const validForm = new FormData();

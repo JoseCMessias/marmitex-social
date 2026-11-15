@@ -24,6 +24,7 @@ export function App() {
   const [pedidos, setPedidos] = useState([]);
   const [persistence, setPersistence] = useState(null);
   const [ttlMinutes, setTtlMinutes] = useState(10);
+  const [backupStatus, setBackupStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [adminUser, setAdminUser] = useState(null);
@@ -114,6 +115,9 @@ export function App() {
         if (Number.isFinite(Number(healthInfo?.insertedDishTtlMinutes))) {
           setTtlMinutes(Number(healthInfo.insertedDishTtlMinutes));
         }
+        if (healthInfo?.backup) {
+          setBackupStatus(healthInfo.backup);
+        }
 
         if (sessionUser) {
           const pedidosList = await api.listPedidos();
@@ -142,6 +146,22 @@ export function App() {
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
+
+  // Schedule a single refresh when a 10-minute backup restore or dish expiration timestamp arrives.
+  useEffect(() => {
+    const timestamps = [
+      ...(backupStatus?.pendingRestores || []).map((entry) => Date.parse(entry.restaurarEm)),
+      ...marmitas.filter((item) => item.temporario && item.expiraEm).map((item) => Date.parse(item.expiraEm)),
+    ].filter((ts) => Number.isFinite(ts));
+
+    if (timestamps.length === 0) return undefined;
+    const nextTimestamp = Math.min(...timestamps);
+    const delayMs = Math.min(24 * 60 * 60 * 1000, Math.max(1000, nextTimestamp - Date.now() + 500));
+    const timer = setTimeout(() => {
+      loadAllData();
+    }, delayMs);
+    return () => clearTimeout(timer);
+  }, [backupStatus, marmitas, loadAllData]);
 
   // Customer derived data
   const availableMarmitas = useMemo(
@@ -334,12 +354,28 @@ export function App() {
 
   const handleDeleteMarmita = async (id) => {
     try {
-      await api.deleteMarmita(id);
+      const result = await api.deleteMarmita(id);
       setMarmitas((prev) => prev.filter((m) => m.id !== id));
       setCartItems((prev) => prev.filter((entry) => entry.marmita.id !== id));
-      showToast('Marmita removida da planilha Excel!');
+      if (result?.backupScheduled) {
+        const health = await api.getHealth().catch(() => null);
+        if (health?.backup) setBackupStatus(health.backup);
+      }
+      showToast(result?.message || 'Marmita removida da planilha Excel!');
     } catch (err) {
       showToast(err.message || 'Erro ao excluir marmita.', 'error');
+      throw err;
+    }
+  };
+
+  const handleRestoreBackup = async () => {
+    try {
+      const result = await api.restoreBackupMarmitas({ force: true });
+      await loadAllData();
+      showToast(result.message || 'Itens principais restaurados do backup!');
+      return result;
+    } catch (err) {
+      showToast(err.message || 'Erro ao restaurar backup.', 'error');
       throw err;
     }
   };
@@ -429,11 +465,13 @@ export function App() {
               pedidos={pedidos}
               persistence={persistence}
               ttlMinutes={ttlMinutes}
+              backupStatus={backupStatus}
               adminUser={adminUser}
               onSaveMarmita={handleSaveMarmita}
               onToggleField={handleToggleMarmitaField}
               onDeleteMarmita={handleDeleteMarmita}
               onCleanupInserted={handleCleanupInsertedMarmitas}
+              onRestoreBackup={handleRestoreBackup}
               onUpdateOrderStatus={handleUpdateOrderStatus}
               onRefreshAll={loadAllData}
               onLogout={handleAdminLogout}
