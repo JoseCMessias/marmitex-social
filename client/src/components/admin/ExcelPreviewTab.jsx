@@ -27,11 +27,11 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
     <div className="space-y-4">
       {/* Info Banner */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:flex-row sm:items-center">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
             <FileSpreadsheet className="h-6 w-6" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <h3 className="font-display text-base font-extrabold text-stone-900">
               Base de Dados Excel: {snapshot?.fileName || 'marmitex_social.xlsx'}
             </h3>
@@ -47,38 +47,38 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           <button
             type="button"
             onClick={async () => {
               await loadSnapshot();
               if (onSyncAll) await onSyncAll();
             }}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-bold text-stone-800 transition hover:bg-stone-50"
+            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-bold text-stone-800 transition hover:bg-stone-50 sm:px-3.5"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Ler da Planilha</span>
+            <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? 'animate-spin' : ''}`} />
+            <span>Ler Planilha</span>
           </button>
 
           <a
             href={api.getExcelDownloadUrl()}
             download="marmitex_social.xlsx"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white shadow-sm transition hover:bg-emerald-700"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:bg-emerald-700 sm:px-4"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 shrink-0" />
             <span>Baixar .xlsx</span>
           </a>
         </div>
       </div>
 
       {/* Sheet Tabs */}
-      <div className="flex items-center gap-2">
+      <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
         {snapshot?.sheets?.map((sheet) => (
           <button
             key={sheet.name}
             type="button"
             onClick={() => setActiveSheet(sheet.name)}
-            className={`cursor-pointer rounded-xl px-4 py-2 text-xs font-extrabold transition ${
+            className={`shrink-0 cursor-pointer whitespace-nowrap rounded-xl px-4 py-2 text-xs font-extrabold transition ${
               activeSheet === sheet.name
                 ? 'bg-orange-600 text-white shadow-sm'
                 : 'bg-white text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50'
@@ -91,7 +91,11 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
 
       {/* Spreadsheet Grid Preview */}
       {currentSheet && (
-        <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-xs">
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-medium text-stone-500 md:hidden">
+            Deslize a tabela lateralmente para ver todas as colunas.
+          </p>
+          <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-xs">
           <table className="w-full border-collapse text-left text-xs">
             <thead>
               <tr className="bg-orange-600 text-white">
@@ -136,6 +140,7 @@ export function ExcelPreviewTab({ refreshSignal, onSyncAll }) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

@@ -72,11 +72,11 @@ export function CartDrawer({
       onClick={onClose}
     >
       <aside
-        className="flex h-full w-full max-w-md flex-col bg-[#FFFBF5] shadow-2xl"
+        className="flex h-[100dvh] w-full max-w-md flex-col bg-[#FFFBF5] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
-        <div className="flex items-center justify-between border-b border-orange-100 bg-white px-5 py-4">
+        <div className="flex items-center justify-between border-b border-orange-100 bg-white px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
               <ShoppingBag className="h-5 w-5" />
@@ -208,7 +208,7 @@ export function CartDrawer({
                       {item.observacao && (
                         <p className="mt-0.5 text-xs text-orange-700">Obs: {item.observacao}</p>
                       )}
-                      <div className="mt-2 flex items-center justify-between">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                         <span className="font-display text-sm font-extrabold text-stone-900">
                           {formatBRL(unitPrice * item.quantidade)}
                         </span>
@@ -301,7 +301,7 @@ export function CartDrawer({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <div className="relative">
                   <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <select

@@ -139,17 +139,17 @@ export function MarmitaFormModal({ isOpen, initialData, onClose, onSave }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+        className="max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-stone-100 bg-white px-6 py-4">
-          <div>
-            <h2 className="font-display text-xl font-extrabold text-stone-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-stone-100 bg-white px-4 py-3.5 sm:px-6 sm:py-4">
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-extrabold text-stone-900 sm:text-xl">
               {isEditing ? `Editar Marmita (${initialData.id})` : 'Cadastrar Nova Marmita'}
             </h2>
             <p className="text-xs font-medium text-stone-500">
@@ -159,14 +159,14 @@ export function MarmitaFormModal({ isOpen, initialData, onClose, onSave }) {
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-xl p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
+            className="shrink-0 cursor-pointer rounded-xl p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
             aria-label="Fechar formulário"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 p-4 sm:space-y-5 sm:p-6">
           {error && (
             <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200">
               {error}
@@ -256,7 +256,7 @@ export function MarmitaFormModal({ isOpen, initialData, onClose, onSave }) {
           </div>
 
           {/* Pricing & Portion */}
-          <div className="grid gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wide text-stone-600">
                 Preço (R$) *
@@ -331,19 +331,19 @@ export function MarmitaFormModal({ isOpen, initialData, onClose, onSave }) {
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="col-span-2">
               <label className="block text-xs font-bold uppercase tracking-wide text-stone-600">
                 URL da Imagem ou Upload
               </label>
-              <div className="mt-1.5 flex gap-2">
+              <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
                   value={form.imagem}
                   onChange={(e) => setForm((p) => ({ ...p, imagem: e.target.value }))}
                   placeholder="/images/marmitas/feijoada.jpg ou https://..."
-                  className="flex-1 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm focus:border-orange-500 focus:bg-white focus:outline-none"
+                  className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm focus:border-orange-500 focus:bg-white focus:outline-none"
                 />
-                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-stone-900 px-3.5 py-2.5 text-xs font-bold text-white transition hover:bg-stone-800">
+                <label className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-stone-900 px-3.5 py-2.5 text-xs font-bold text-white transition hover:bg-stone-800">
                   <Upload className="h-4 w-4" />
                   <span>{uploading ? 'Enviando...' : 'Upload'}</span>
                   <input
@@ -367,9 +367,9 @@ export function MarmitaFormModal({ isOpen, initialData, onClose, onSave }) {
                   e.currentTarget.src = FALLBACK_IMAGE;
                 }}
                 alt="Pré-visualização"
-                className="h-20 w-28 shrink-0 rounded-xl object-cover shadow-xs ring-1 ring-orange-200"
+                className="h-36 w-full shrink-0 rounded-xl object-cover shadow-xs ring-1 ring-orange-200 sm:h-20 sm:w-28"
               />
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <div className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-stone-600">
                   <ImagePlus className="h-3.5 w-3.5 text-orange-600" />
                   Ou escolha uma foto pronta do catálogo:
@@ -426,18 +426,18 @@ export function MarmitaFormModal({ isOpen, initialData, onClose, onSave }) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 border-t border-stone-100 pt-4">
+          <div className="flex flex-col-reverse gap-2 border-t border-stone-100 pt-4 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-bold text-stone-600 transition hover:bg-stone-100"
+              className="w-full cursor-pointer rounded-xl px-4 py-2.5 text-sm font-bold text-stone-600 transition hover:bg-stone-100 sm:w-auto"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="cursor-pointer rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-extrabold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:opacity-60"
+              className="w-full cursor-pointer rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-extrabold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:opacity-60 sm:w-auto"
             >
               {saving
                 ? 'Salvando no Excel...'

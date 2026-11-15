@@ -106,10 +106,10 @@ export function MarmitaCard({
         </div>
 
         {/* Price + High-Conversion Buy Action */}
-        <div className="mt-4 flex items-end justify-between gap-3 border-t border-stone-100 pt-3.5">
-          <div>
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-2.5 border-t border-stone-100 pt-3.5">
+          <div className="min-w-0">
             {discount > 0 ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-xs font-medium text-stone-400 line-through">
                   {formatBRL(marmita.preco)}
                 </span>
@@ -122,17 +122,17 @@ export function MarmitaCard({
                 Por apenas
               </span>
             )}
-            <div className="font-display text-2xl font-extrabold tracking-tight text-stone-900">
+            <div className="font-display text-xl font-extrabold tracking-tight text-stone-900 sm:text-2xl">
               {formatBRL(effectivePrice)}
             </div>
           </div>
 
           {cartQuantity > 0 ? (
-            <div className="flex items-center gap-1.5 rounded-2xl bg-emerald-50 p-1 ring-1 ring-emerald-300">
+            <div className="flex shrink-0 items-center gap-1 rounded-2xl bg-emerald-50 p-1 ring-1 ring-emerald-300 sm:gap-1.5">
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(marmita.id, cartQuantity - 1)}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm transition hover:bg-emerald-100 sm:h-9 sm:w-9"
                 aria-label={`Remover uma unidade de ${marmita.nome}`}
               >
                 <Minus className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function MarmitaCard({
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(marmita.id, cartQuantity + 1)}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 sm:h-9 sm:w-9"
                 aria-label={`Adicionar mais uma unidade de ${marmita.nome}`}
               >
                 <Plus className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function MarmitaCard({
             <button
               type="button"
               onClick={() => onAdd(marmita, 1)}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-95"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-2xl bg-emerald-600 px-3.5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
             >
               <ShoppingCart className="h-4 w-4" />
               <span>Comprar</span>

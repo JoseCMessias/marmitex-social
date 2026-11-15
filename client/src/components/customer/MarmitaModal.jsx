@@ -25,24 +25,24 @@ export function MarmitaModal({ marmita, onClose, onAddToCart }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+        className="relative max-h-[92dvh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white/90 text-stone-700 shadow-md backdrop-blur-sm transition hover:bg-white hover:text-stone-950"
+          className="absolute right-3.5 top-3.5 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white/90 text-stone-700 shadow-md backdrop-blur-sm transition hover:bg-white hover:text-stone-950 sm:right-4 sm:top-4"
           aria-label="Fechar detalhes"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Image */}
-        <div className="relative h-64 w-full bg-orange-50 sm:h-72">
+        <div className="relative h-52 w-full bg-orange-50 sm:h-72">
           <img
             src={marmita.imagem || FALLBACK_IMAGE}
             onError={(e) => {
@@ -66,7 +66,7 @@ export function MarmitaModal({ marmita, onClose, onAddToCart }) {
         </div>
 
         {/* Details */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-lg bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-800">
               {marmita.categoria}
@@ -81,7 +81,7 @@ export function MarmitaModal({ marmita, onClose, onAddToCart }) {
             ))}
           </div>
 
-          <h2 className="mt-3 font-display text-2xl font-extrabold text-stone-900">
+          <h2 className="mt-3 font-display text-xl font-extrabold text-stone-900 sm:text-2xl">
             {marmita.nome}
           </h2>
 
@@ -89,17 +89,17 @@ export function MarmitaModal({ marmita, onClose, onAddToCart }) {
             {marmita.descricao}
           </p>
 
-          <div className="mt-4 grid grid-cols-3 gap-2.5 rounded-2xl bg-[#FFFBF5] p-3 ring-1 ring-orange-100">
-            <div className="flex items-center gap-2 text-xs font-semibold text-stone-700">
-              <Scale className="h-4 w-4 text-orange-600" />
+          <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-[#FFFBF5] p-3 ring-1 ring-orange-100 sm:gap-2.5">
+            <div className="flex flex-col items-center gap-1 text-center text-xs font-semibold text-stone-700 sm:flex-row sm:text-left sm:gap-2">
+              <Scale className="h-4 w-4 shrink-0 text-orange-600" />
               <span>{marmita.tamanho || '500g'}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-stone-700">
-              <Clock className="h-4 w-4 text-orange-600" />
+            <div className="flex flex-col items-center gap-1 text-center text-xs font-semibold text-stone-700 sm:flex-row sm:text-left sm:gap-2">
+              <Clock className="h-4 w-4 shrink-0 text-orange-600" />
               <span>{marmita.tempoPreparo || '25-35 min'}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-stone-700">
-              <Flame className="h-4 w-4 text-amber-500" />
+            <div className="flex flex-col items-center gap-1 text-center text-xs font-semibold text-stone-700 sm:flex-row sm:text-left sm:gap-2">
+              <Flame className="h-4 w-4 shrink-0 text-amber-500" />
               <span>{marmita.calorias ? `${marmita.calorias} kcal` : 'Fresh'}</span>
             </div>
           </div>

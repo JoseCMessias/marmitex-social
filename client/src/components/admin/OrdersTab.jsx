@@ -40,7 +40,7 @@ export function OrdersTab({ pedidos, onUpdateStatus }) {
           className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs sm:p-5"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1.5">
+            <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-lg bg-stone-900 px-2.5 py-0.5 text-xs font-extrabold text-white">
                   {order.id}
@@ -53,25 +53,25 @@ export function OrdersTab({ pedidos, onUpdateStatus }) {
                   {order.status}
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs text-stone-500">
-                  <Clock className="h-3.5 w-3.5" />
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
                   {new Date(order.criadoEm).toLocaleString('pt-BR')}
                 </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-bold text-stone-900">
-                <span className="inline-flex items-center gap-1.5">
-                  <User className="h-4 w-4 text-orange-600" />
+                <span className="inline-flex items-center gap-1.5 break-words">
+                  <User className="h-4 w-4 shrink-0 text-orange-600" />
                   {order.clienteNome}
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600">
-                  <Phone className="h-3.5 w-3.5 text-stone-400" />
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-stone-400" />
                   {order.clienteTelefone}
                 </span>
               </div>
 
-              <p className="inline-flex items-center gap-1.5 text-xs text-stone-600">
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-stone-400" />
-                {order.endereco}
+              <p className="flex items-start gap-1.5 break-words text-xs text-stone-600">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-400" />
+                <span>{order.endereco}</span>
               </p>
 
               <div className="rounded-xl bg-[#FFFBF5] px-3 py-2 text-xs font-semibold text-stone-800 ring-1 ring-orange-100">
@@ -79,11 +79,13 @@ export function OrdersTab({ pedidos, onUpdateStatus }) {
               </div>
 
               {order.observacoes && (
-                <p className="text-xs italic text-stone-500">Obs: {order.observacoes}</p>
+                <p className="break-words text-xs italic text-stone-500">
+                  Obs: {order.observacoes}
+                </p>
               )}
             </div>
 
-            <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-stone-100 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
               <div className="text-left sm:text-right">
                 <div className="text-xs font-medium text-stone-500">{order.formaPagamento}</div>
                 <div className="font-display text-xl font-extrabold text-emerald-700">
@@ -95,7 +97,7 @@ export function OrdersTab({ pedidos, onUpdateStatus }) {
                 value={order.status}
                 onChange={(e) => onUpdateStatus(order.id, e.target.value)}
                 aria-label={`Alterar status do pedido ${order.id}`}
-                className="cursor-pointer rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-bold text-stone-800 focus:border-orange-500 focus:bg-white focus:outline-none"
+                className="w-full cursor-pointer rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-bold text-stone-800 focus:border-orange-500 focus:bg-white focus:outline-none sm:w-auto"
               >
                 {ORDER_STATUSES.map((status) => (
                   <option key={status} value={status}>

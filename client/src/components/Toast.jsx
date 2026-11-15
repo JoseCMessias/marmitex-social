@@ -6,7 +6,7 @@ export function Toast({ toast, onClose }) {
   const isError = toast.type === 'error';
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm animate-[fadeIn_0.2s_ease-out]">
+    <div className="fixed inset-x-3 top-24 z-50 sm:inset-x-auto sm:top-auto sm:bottom-5 sm:right-5 sm:w-full sm:max-w-sm animate-[fadeIn_0.2s_ease-out]">
       <div
         className={`flex items-start gap-3 rounded-2xl border px-4 py-3.5 shadow-xl ${
           isError

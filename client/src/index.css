@@ -6,6 +6,12 @@
     --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     font-family: var(--font-sans);
     background-color: #FFFBF5;
@@ -15,6 +21,16 @@
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
   }
+}
+
+/* Hide horizontal scrollbar for mobile swipeable filter rows while preserving scroll */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom subtle scrollbar for crisp visual polish */

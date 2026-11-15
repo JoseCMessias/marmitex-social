@@ -57,8 +57,8 @@ export function FilterBar({
         </div>
       </div>
 
-      {/* Category Pills */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Category Pills: horizontal swipe on mobile, tidy wrap on desktop */}
+      <div className="no-scrollbar -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
         {CATEGORIAS.map((cat) => {
           const active = selectedCategory === cat;
           return (
@@ -66,7 +66,7 @@ export function FilterBar({
               key={cat}
               type="button"
               onClick={() => onSelectCategory(cat)}
-              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-bold transition sm:text-sm ${
+              className={`shrink-0 cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm ${
                 active
                   ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20'
                   : 'bg-stone-100 text-stone-700 hover:bg-orange-50 hover:text-orange-700'
@@ -78,16 +78,16 @@ export function FilterBar({
         })}
       </div>
 
-      {/* Taste / Flavor Profile Row */}
-      <div className="flex flex-wrap items-center gap-1.5 border-t border-stone-100 pt-3">
-        <span className="mr-1 inline-flex items-center gap-1 text-xs font-bold text-stone-500">
+      {/* Taste / Flavor Profile Row: horizontal swipe on mobile, wrap on desktop */}
+      <div className="no-scrollbar -mx-1 flex items-center gap-1.5 overflow-x-auto border-t border-stone-100 px-1 pt-3 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+        <span className="mr-1 inline-flex shrink-0 items-center gap-1 text-xs font-bold text-stone-500">
           <Sparkles className="h-3.5 w-3.5 text-orange-500" />
           Gosto:
         </span>
         <button
           type="button"
           onClick={() => onSelectTaste('')}
-          className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+          className={`shrink-0 cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition ${
             selectedTaste === ''
               ? 'bg-stone-900 text-white'
               : 'bg-stone-50 text-stone-600 hover:bg-stone-100'
@@ -102,7 +102,7 @@ export function FilterBar({
               key={taste}
               type="button"
               onClick={() => onSelectTaste(active ? '' : taste)}
-              className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+              className={`shrink-0 cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition ${
                 active
                   ? 'bg-orange-100 text-orange-800 ring-1 ring-orange-300'
                   : 'bg-stone-50 text-stone-600 hover:bg-orange-50/70 hover:text-orange-700'

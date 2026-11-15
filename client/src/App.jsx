@@ -302,7 +302,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFBF5] text-[#1C1917]">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-[#FFFBF5] text-[#1C1917]">
       <Header
         activeView={activeView}
         onChangeView={handleChangeView}
@@ -311,24 +311,24 @@ export function App() {
         onOpenCart={() => setCartOpen(true)}
       />
 
-      <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-3.5 py-5 pb-28 sm:px-6 sm:py-8">
         {loading && marmitas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-orange-100 bg-white py-20 text-center">
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-orange-100 bg-white px-5 py-16 text-center sm:py-20">
             <RefreshCw className="h-8 w-8 animate-spin text-orange-600" />
-            <p className="mt-3 font-display text-lg font-bold text-stone-800">
+            <p className="mt-3 font-display text-base font-bold text-stone-800 sm:text-lg">
               Carregando cardápio da planilha Excel...
             </p>
           </div>
         ) : loadError ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center">
-            <h2 className="font-display text-xl font-extrabold text-red-900">
+          <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center sm:p-8">
+            <h2 className="font-display text-lg font-extrabold text-red-900 sm:text-xl">
               Falha ao conectar ao servidor
             </h2>
             <p className="mt-2 text-sm text-red-700">{loadError}</p>
             <button
               type="button"
               onClick={loadAllData}
-              className="mt-4 cursor-pointer rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700"
+              className="mt-4 w-full cursor-pointer rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700 sm:w-auto"
             >
               Tentar Novamente
             </button>
@@ -380,7 +380,7 @@ export function App() {
               />
 
               {filteredCustomerMarmitas.length === 0 ? (
-                <div className="rounded-3xl border border-orange-100 bg-white p-12 text-center shadow-xs">
+                <div className="rounded-3xl border border-orange-100 bg-white p-8 text-center shadow-xs sm:p-12">
                   <UtensilsCrossed className="mx-auto h-10 w-10 text-orange-400" />
                   <h3 className="mt-3 font-display text-xl font-bold text-stone-900">
                     Nenhuma marmita encontrada
@@ -391,13 +391,13 @@ export function App() {
                   <button
                     type="button"
                     onClick={resetCustomerFilters}
-                    className="mt-4 cursor-pointer rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-700"
+                    className="mt-4 w-full cursor-pointer rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-700 sm:w-auto"
                   >
                     Mostrar Todas as Marmitas
                   </button>
                 </div>
               ) : (
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredCustomerMarmitas.map((dish) => (
                     <MarmitaCard
                       key={dish.id}
@@ -417,28 +417,28 @@ export function App() {
 
       {/* Floating Bottom Conversion Bar when items are in Cart */}
       {activeView === 'customer' && cartCount > 0 && !cartOpen && (
-        <div className="fixed inset-x-0 bottom-4 z-30 mx-auto max-w-lg px-4">
+        <div className="fixed inset-x-0 bottom-3 z-30 mx-auto max-w-lg px-3 sm:bottom-4 sm:px-4">
           <button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="flex w-full cursor-pointer items-center justify-between rounded-2xl bg-emerald-600 px-5 py-3.5 text-white shadow-2xl shadow-emerald-900/30 ring-2 ring-white/40 transition hover:bg-emerald-700 active:scale-[0.99]"
+            className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl bg-emerald-600 px-4 py-3 text-white shadow-2xl shadow-emerald-900/30 ring-2 ring-white/40 transition hover:bg-emerald-700 active:scale-[0.99] sm:px-5 sm:py-3.5"
           >
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-300 text-sm font-extrabold text-stone-950">
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-300 text-sm font-extrabold text-stone-950">
                 {cartCount}
               </span>
-              <div className="text-left">
-                <div className="text-xs font-semibold text-emerald-100">
+              <div className="min-w-0 text-left">
+                <div className="hidden text-xs font-semibold text-emerald-100 sm:block">
                   Pronto para pedir?
                 </div>
-                <div className="font-display text-sm font-extrabold">
+                <div className="truncate font-display text-sm font-extrabold">
                   Finalizar Pedido Agora
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 font-display text-lg font-extrabold">
+            <div className="flex shrink-0 items-center gap-1.5 font-display text-base font-extrabold sm:gap-2 sm:text-lg">
               <span>{formatBRL(cartTotal)}</span>
-              <ShoppingBag className="h-5 w-5" />
+              <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </button>
         </div>
