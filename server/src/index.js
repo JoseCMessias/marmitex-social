@@ -153,7 +153,7 @@ export function createApp() {
 
   app.use((err, _req, res, _next) => {
     console.error('[API Error]', err);
-    const status = err.name === 'MulterError' ? 400 : 500;
+    const status = err.status || (err.name === 'MulterError' ? 400 : 500);
     res.status(status).json({
       error: err.message || 'Erro interno ao processar requisição na planilha Excel.',
     });

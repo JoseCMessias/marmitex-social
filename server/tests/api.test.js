@@ -6,6 +6,7 @@ import { after, before, describe, it } from 'node:test';
 
 const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'marmitex-api-'));
 process.env.EXCEL_DB_PATH = path.join(tempDir, 'api_marmitex.xlsx');
+process.env.UPLOADS_DIR = path.join(tempDir, 'uploads');
 
 const { createApp } = await import('../src/index.js');
 const { ensureDatabase } = await import('../src/db/excelDb.js');
@@ -229,5 +230,26 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     const forceCleanup = await forceCleanupRes.json();
     assert.equal(forceCleanup.deletedCount, 1);
     assert.deepEqual(forceCleanup.deletedIds, [tempDish.id]);
+
+    // Upload image via Multer 2.x (valid image + invalid mime rejection)
+    const validForm = new FormData();
+    validForm.append('image', new Blob([Uint8Array.from([137, 80, 78, 71])], { type: 'image/png' }), 'prato.png');
+    const uploadRes = await fetch(`${baseUrl}/api/marmitas/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${loginData.token}` },
+      body: validForm,
+    });
+    assert.equal(uploadRes.status, 201);
+    const uploadData = await uploadRes.json();
+    assert.match(uploadData.url, /^\/uploads\/marmita-.*\.png$/);
+
+    const invalidForm = new FormData();
+    invalidForm.append('image', new Blob(['texto'], { type: 'text/plain' }), 'nota.txt');
+    const invalidUploadRes = await fetch(`${baseUrl}/api/marmitas/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${loginData.token}` },
+      body: invalidForm,
+    });
+    assert.equal(invalidUploadRes.status, 400);
   });
 });

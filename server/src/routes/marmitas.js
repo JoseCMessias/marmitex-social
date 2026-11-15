@@ -55,10 +55,11 @@ const uploadOptions = {
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype && file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Envie apenas arquivos de imagem (PNG, JPG ou WEBP).'));
+      return cb(null, true);
     }
+    const err = new Error('Envie apenas arquivos de imagem (PNG, JPG ou WEBP).');
+    err.status = 400;
+    return cb(err, false);
   },
 };
 
