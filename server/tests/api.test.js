@@ -477,12 +477,12 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.equal(delSingleData.deleted, true);
     assert.equal(delSingleData.id, cardOrder.id);
 
-    const { order: voucherOrder } = await (
+    const { order: canceledOrder } = await (
       await fetch(`${baseUrl}/api/pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clienteNome: 'Lucas Recebido',
+          clienteNome: 'Lucas Cancelado',
           clienteTelefone: '(11) 96666-5555',
           endereco: 'Rua Teste, 50',
           formaPagamento: 'Pix',
@@ -490,17 +490,25 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
         }),
       })
     ).json();
-    assert.equal(voucherOrder.status, 'Recebido');
+    const cancelStatusRes = await fetch(`${baseUrl}/api/pedidos/${canceledOrder.id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: 'Cancelado' }),
+    });
+    assert.equal(cancelStatusRes.status, 200);
 
-    // Clear orders filtered by status "Recebido"
-    const clearReceivedRes = await fetch(`${baseUrl}/api/pedidos?status=Recebido`, {
+    // Clear orders filtered by status "Cancelado"
+    const clearCanceledRes = await fetch(`${baseUrl}/api/pedidos?status=Cancelado`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-    assert.equal(clearReceivedRes.status, 200);
-    const clearReceivedData = await clearReceivedRes.json();
-    assert.ok(clearReceivedData.deletedCount >= 1);
-    assert.equal(clearReceivedData.deletedIds.includes(voucherOrder.id), true);
+    assert.equal(clearCanceledRes.status, 200);
+    const clearCanceledData = await clearCanceledRes.json();
+    assert.ok(clearCanceledData.deletedCount >= 1);
+    assert.equal(clearCanceledData.deletedIds.includes(canceledOrder.id), true);
 
     const afterDeleteList = await (
       await fetch(`${baseUrl}/api/pedidos`, {
@@ -508,6 +516,6 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
       })
     ).json();
     assert.equal(afterDeleteList.items.some((p) => p.id === cardOrder.id), false);
-    assert.equal(afterDeleteList.items.some((p) => p.status === 'Recebido'), false);
+    assert.equal(afterDeleteList.items.some((p) => p.status === 'Cancelado'), false);
   });
 });
