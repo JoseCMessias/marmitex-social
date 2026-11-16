@@ -410,6 +410,34 @@ export function App() {
     }
   };
 
+  const handleDeleteOrder = async (id) => {
+    try {
+      const result = await api.deletePedido(id);
+      setPedidos((prev) => prev.filter((p) => p.id !== id));
+      showToast(result?.message || `Pedido ${id} removido da planilha Excel!`);
+    } catch (err) {
+      showToast(err.message || 'Erro ao excluir pedido.', 'error');
+      throw err;
+    }
+  };
+
+  const handleClearOrders = async ({ status = null, all = false } = {}) => {
+    try {
+      const result = await api.clearPedidos({ status, all });
+      const deletedSet = new Set(result?.deletedIds || []);
+      if (all) {
+        setPedidos([]);
+      } else if (deletedSet.size > 0) {
+        setPedidos((prev) => prev.filter((p) => !deletedSet.has(p.id)));
+      }
+      showToast(result?.message || 'Pedidos removidos da planilha Excel!');
+      return result;
+    } catch (err) {
+      showToast(err.message || 'Erro ao excluir pedidos.', 'error');
+      throw err;
+    }
+  };
+
   const resetCustomerFilters = () => {
     setSearchTerm('');
     setSelectedCategory('Todas');
@@ -477,6 +505,8 @@ export function App() {
               onCleanupInserted={handleCleanupInsertedMarmitas}
               onRestoreBackup={handleRestoreBackup}
               onUpdateOrderStatus={handleUpdateOrderStatus}
+              onDeleteOrder={handleDeleteOrder}
+              onClearOrders={handleClearOrders}
               onRefreshAll={loadAllData}
               onLogout={handleAdminLogout}
               onShowToast={showToast}

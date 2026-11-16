@@ -42,6 +42,8 @@ export function AdminDashboard({
   onCleanupInserted,
   onRestoreBackup,
   onUpdateOrderStatus,
+  onDeleteOrder,
+  onClearOrders,
   onRefreshAll,
   onLogout,
   onShowToast,
@@ -653,6 +655,14 @@ export function AdminDashboard({
           pedidos={pedidos}
           onUpdateStatus={async (id, status) => {
             await onUpdateOrderStatus(id, status);
+            setExcelRefreshKey((k) => k + 1);
+          }}
+          onDeleteOrder={async (id) => {
+            await onDeleteOrder(id);
+            setExcelRefreshKey((k) => k + 1);
+          }}
+          onClearOrders={async (options) => {
+            await onClearOrders(options);
             setExcelRefreshKey((k) => k + 1);
           }}
         />

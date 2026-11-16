@@ -461,5 +461,53 @@ describe('MarmitexSocial HTTP API + Excel integration', () => {
     assert.ok(persistedCard);
     assert.equal(persistedCard.pagamentoDetalhes?.ultimosDigitos, '4321');
     assert.equal(persistedCard.pagamentoDetalhes?.parcelas, 3);
+
+    // Delete single order (requires admin auth)
+    const unauthDelOrder = await fetch(`${baseUrl}/api/pedidos/${cardOrder.id}`, {
+      method: 'DELETE',
+    });
+    assert.equal(unauthDelOrder.status, 401);
+
+    const delSingleOrder = await fetch(`${baseUrl}/api/pedidos/${cardOrder.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(delSingleOrder.status, 200);
+    const delSingleData = await delSingleOrder.json();
+    assert.equal(delSingleData.deleted, true);
+    assert.equal(delSingleData.id, cardOrder.id);
+
+    const { order: voucherOrder } = await (
+      await fetch(`${baseUrl}/api/pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clienteNome: 'Lucas Recebido',
+          clienteTelefone: '(11) 96666-5555',
+          endereco: 'Rua Teste, 50',
+          formaPagamento: 'Pix',
+          itens: [{ id: dishId, quantidade: 1 }],
+        }),
+      })
+    ).json();
+    assert.equal(voucherOrder.status, 'Recebido');
+
+    // Clear orders filtered by status "Recebido"
+    const clearReceivedRes = await fetch(`${baseUrl}/api/pedidos?status=Recebido`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(clearReceivedRes.status, 200);
+    const clearReceivedData = await clearReceivedRes.json();
+    assert.ok(clearReceivedData.deletedCount >= 1);
+    assert.equal(clearReceivedData.deletedIds.includes(voucherOrder.id), true);
+
+    const afterDeleteList = await (
+      await fetch(`${baseUrl}/api/pedidos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    ).json();
+    assert.equal(afterDeleteList.items.some((p) => p.id === cardOrder.id), false);
+    assert.equal(afterDeleteList.items.some((p) => p.status === 'Recebido'), false);
   });
 });

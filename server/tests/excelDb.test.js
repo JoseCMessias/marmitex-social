@@ -16,6 +16,8 @@ const {
   createMarmita,
   createPedido,
   deleteMarmita,
+  deletePedido,
+  deletePedidos,
   ensureDatabase,
   getBackupEntryById,
   getBackupSummary,
@@ -110,6 +112,26 @@ describe('MarmitexSocial Excel Database CRUD', () => {
 
     const updatedOrder = await updatePedidoStatus(order.id, 'Em Preparo');
     assert.equal(updatedOrder.status, 'Em Preparo');
+
+    const secondOrder = await createPedido({
+      clienteNome: 'Cliente Recebido Para Deletar',
+      clienteTelefone: '11988887777',
+      endereco: 'Av. Secundária, 200',
+      formaPagamento: 'Dinheiro',
+      itens: [{ id: dish.id, quantidade: 1 }],
+    });
+    assert.equal(secondOrder.status, 'Recebido');
+
+    const clearedReceived = await deletePedidos({ status: 'Recebido' });
+    assert.equal(clearedReceived.deletedIds.includes(secondOrder.id), true);
+    assert.equal(clearedReceived.deletedIds.includes(order.id), false);
+
+    const removedSingle = await deletePedido(order.id);
+    assert.equal(removedSingle, true);
+    assert.equal(await deletePedido('PED-INEXISTENTE'), false);
+    const remainingOrders = await listPedidos();
+    assert.equal(remainingOrders.some((o) => o.id === order.id), false);
+    assert.equal(remainingOrders.some((o) => o.id === secondOrder.id), false);
   });
 
   it('keeps inserted dishes in Excel within 10 minutes and auto-deletes them after 10 minutes', async () => {

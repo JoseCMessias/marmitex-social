@@ -237,6 +237,22 @@ export const api = {
     return res.order;
   },
 
+  async deletePedido(id) {
+    return request(`/pedidos/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async clearPedidos({ status = null, all = false } = {}) {
+    const params = new URLSearchParams();
+    if (all) params.set('all', 'true');
+    if (status) params.set('status', status);
+    const query = params.toString();
+    return request(`/pedidos${query ? `?${query}` : ''}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Planilha Excel
   async getExcelSnapshot() {
     return request('/excel/snapshot');

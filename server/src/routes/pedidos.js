@@ -1,6 +1,12 @@
 import express from 'express';
 import { requireAdminAuth } from '../auth/adminAuth.js';
-import { createPedido, listPedidos, updatePedidoStatus } from '../db/excelDb.js';
+import {
+  createPedido,
+  deletePedido,
+  deletePedidos,
+  listPedidos,
+  updatePedidoStatus,
+} from '../db/excelDb.js';
 
 const VALID_STATUSES = [
   'Recebido',
@@ -146,6 +152,53 @@ pedidosRouter.patch('/:id/status', requireAdminAuth, async (req, res, next) => {
     }
 
     res.json({ order: updated, message: 'Status do pedido atualizado na planilha Excel!' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+pedidosRouter.delete('/', requireAdminAuth, async (req, res, next) => {
+  try {
+    const all = req.query?.all === 'true' || req.body?.all === true;
+    const statusRaw = req.query?.status ?? req.body?.status;
+    const status = typeof statusRaw === 'string' && statusRaw.trim() ? statusRaw.trim() : null;
+    const ids = Array.isArray(req.body?.ids) && req.body.ids.length > 0 ? req.body.ids : null;
+
+    if (status && !VALID_STATUSES.includes(status)) {
+      return res.status(400).json({
+        error: `Status inválido. Use um de: ${VALID_STATUSES.join(', ')}`,
+      });
+    }
+
+    if (!all && !status && !ids) {
+      return res.status(400).json({
+        error: 'Informe os pedidos, um status válido ou all=true para excluir.',
+      });
+    }
+
+    const result = await deletePedidos({ all, status, ids });
+    const message =
+      result.deletedCount > 0
+        ? `${result.deletedCount} pedido(s) removido(s) da planilha Excel!`
+        : 'Nenhum pedido correspondente encontrado para exclusão.';
+
+    res.json({ ...result, message });
+  } catch (err) {
+    next(err);
+  }
+});
+
+pedidosRouter.delete('/:id', requireAdminAuth, async (req, res, next) => {
+  try {
+    const deleted = await deletePedido(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+    res.json({
+      deleted: true,
+      id: req.params.id,
+      message: 'Pedido removido da planilha Excel!',
+    });
   } catch (err) {
     next(err);
   }

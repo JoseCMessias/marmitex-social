@@ -413,18 +413,27 @@ async function writeDatabase(marmitas, pedidos, backupEntries = []) {
 
   const dbPath = getDbPath();
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
-  const tempPath = `${dbPath}.${Date.now()}.tmp.xlsx`;
+  const tempPath = `${dbPath}.${process.pid}.${Date.now()}.tmp.xlsx`;
   await fs.writeFile(tempPath, buffer);
-  try {
-    await fs.rename(tempPath, dbPath);
-  } catch (err) {
-    await fs.unlink(tempPath).catch(() => {});
-    if (err.code === 'EPERM' || err.code === 'EBUSY') {
-      throw new Error(
-        'Não foi possível gravar a planilha Excel porque o arquivo está aberto em outro programa. Feche o Excel e tente novamente.'
-      );
+  const retryDelaysMs = [25, 50, 100, 150];
+  for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+    try {
+      await fs.rename(tempPath, dbPath);
+      return;
+    } catch (err) {
+      const isTransientLock = err.code === 'EPERM' || err.code === 'EBUSY';
+      if (isTransientLock && attempt < retryDelaysMs.length) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelaysMs[attempt]));
+        continue;
+      }
+      await fs.unlink(tempPath).catch(() => {});
+      if (isTransientLock) {
+        throw new Error(
+          'Não foi possível gravar a planilha Excel porque o arquivo está aberto em outro programa. Feche o Excel e tente novamente.'
+        );
+      }
+      throw err;
     }
-    throw err;
   }
 }
 
@@ -1133,6 +1142,54 @@ export async function updatePedidoStatus(id, status) {
     await writeDatabase(reconciled.marmitas, nextPedidos, reconciled.backupEntries);
     return nextPedidos[index];
   });
+}
+
+export async function deletePedidos({ ids = null, status = null, all = false } = {}) {
+  return withWriteLock(async () => {
+    const { marmitas, pedidos, backupEntries, hasBackupSheet } = await readWorkbookUnsafe();
+    const reconciled = reconcileWorkbookState(marmitas, backupEntries, { hasBackupSheet });
+
+    const idSet = Array.isArray(ids) ? new Set(ids.map((value) => String(value))) : null;
+    const shouldDelete = (order) => {
+      if (all) return true;
+      if (idSet) return idSet.has(order.id);
+      if (status) return order.status === status;
+      return false;
+    };
+
+    const remaining = [];
+    const deletedIds = [];
+    for (const order of pedidos) {
+      if (shouldDelete(order)) {
+        deletedIds.push(order.id);
+      } else {
+        remaining.push(order);
+      }
+    }
+
+    if (deletedIds.length === 0) {
+      if (reconciled.changed) {
+        await writeDatabase(reconciled.marmitas, pedidos, reconciled.backupEntries);
+      }
+      return {
+        deletedCount: 0,
+        deletedIds: [],
+        remainingCount: pedidos.length,
+      };
+    }
+
+    await writeDatabase(reconciled.marmitas, remaining, reconciled.backupEntries);
+    return {
+      deletedCount: deletedIds.length,
+      deletedIds,
+      remainingCount: remaining.length,
+    };
+  });
+}
+
+export async function deletePedido(id) {
+  const result = await deletePedidos({ ids: [id] });
+  return result.deletedCount > 0;
 }
 
 function summarizeBackupEntries(backupEntries) {
